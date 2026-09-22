@@ -45,3 +45,16 @@ export function passwordChangedEmailHtml() {
     <p style="margin:0;color:#647064;font-size:13px;line-height:1.6;">Não foi você? Solicite outra recuperação de senha e entre em contato com o responsável pelo site.</p>
   `);
 }
+
+export function verificationEmailHtml(url) {
+  const safeUrl = escapeHtml(url);
+  return layout("Confirme seu e-mail", `
+    <p style="margin:0 0 12px;color:#886027;font-size:12px;letter-spacing:1px;">SUA CONTA TÁ MARCADO</p>
+    <h1 style="margin:0 0 16px;color:#1c2e23;font-family:Georgia,serif;font-size:30px;">Confirme seu e-mail</h1>
+    <p style="font-size:16px;line-height:1.6;color:#3d4a3c;">Para ativar sua conta, confirme este endereço e defina sua senha no botão abaixo.</p>
+    <p style="margin:28px 0;"><a href="${safeUrl}" style="display:inline-block;padding:16px 24px;background:#2f4a3a;color:#ffffff;border-radius:8px;text-decoration:none;font-weight:bold;">Confirmar e definir senha</a></p>
+    <p style="font-size:14px;line-height:1.6;">Este link vale por <strong>24 horas</strong> e só pode ser usado uma vez. Se o botão não abrir, copie este endereço:</p>
+    <p style="font-size:12px;word-break:break-all;"><a href="${safeUrl}" style="color:#2f4a3a;">${safeUrl}</a></p>
+    <p style="margin-top:24px;color:#647064;font-size:13px;line-height:1.6;">Não pediu o cadastro? Ignore esta mensagem. Nunca compartilhe este link nem sua senha.</p>
+  `);
+}

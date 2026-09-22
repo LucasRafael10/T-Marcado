@@ -1,4 +1,4 @@
-> Configuração guiada de e-mail: [docs/CONFIGURAR-RESEND.md](docs/CONFIGURAR-RESEND.md). Veja também [docs/REVISAO.md](docs/REVISAO.md).
+> Configuração guiada de e-mail: [docs/CONFIGURAR-RESEND.md](docs/CONFIGURAR-RESEND.md). Antes de publicar as correções de segurança, leia [docs/SEGURANCA.md](docs/SEGURANCA.md).
 
 # Gêmeas Cerimonial — Supabase e Render
 
@@ -53,6 +53,7 @@ Referência: [conexões PostgreSQL do Supabase](https://supabase.com/docs/guides
 | `NODE_ENV` | `production` |
 | `APP_ORIGIN` | `https://gemeas-cerimonial-dgbq.onrender.com` |
 | `DATABASE_URL` | URI Session pooler preenchida com a senha do banco |
+| `DATABASE_CA_CERT` | Certificado CA do banco Supabase, se a cadeia não for reconhecida pelo Node |
 
 5. Salve as variáveis e execute **Manual Deploy → Deploy latest commit**, se um deploy não tiver sido disparado automaticamente.
 6. Após o deploy, abra `https://gemeas-cerimonial-dgbq.onrender.com/health`. O resultado deve ser `ok`.

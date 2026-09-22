@@ -123,6 +123,10 @@ function sendViaWhatsApp() {
     "noopener,noreferrer",
   );
 }
+document.querySelector('[data-action="close-invite-modal"]')?.addEventListener("click", closeInviteModal);
+document.querySelector('[data-action="send-via-whatsapp"]')?.addEventListener("click", sendViaWhatsApp);
+document.querySelector('[data-action="close-guest-modal"]')?.addEventListener("click", () => hideModal("guestModal"));
+document.querySelector('[data-action="close-edit-event-modal"]')?.addEventListener("click", () => hideModal("editEventModal"));
 function openGuest(gid) {
   const g = currentEvent.guests.find((g) => g.id === gid);
   $("guestForm").reset();
@@ -320,11 +324,10 @@ document.addEventListener("DOMContentLoaded", () =>
         await api(eventPath() + "/access", "POST", {
           nome: $("accessName").value,
           email: $("accessEmail").value,
-          password: $("accessPassword").value,
         });
         $("accessForm").reset();
         notice(
-          "Acesso de leitura concedido. Compartilhe as credenciais diretamente com a pessoa.",
+          "Acesso concedido. Se a conta ainda não estiver confirmada, a pessoa receberá um link para definir a própria senha.",
         );
       });
     };

@@ -3,11 +3,11 @@ import { id, hash } from "./passwords.mjs";
 export async function user(nome, email, password, role) {
   const uid = id();
   await run(
-    "INSERT INTO users VALUES(?,?,?,?,?)",
+    "INSERT INTO users(id,nome,email,password,role) VALUES(?,?,?,?,?)",
     uid,
     nome,
     email,
-    hash(password),
+    await hash(password),
     role,
   );
   return uid;

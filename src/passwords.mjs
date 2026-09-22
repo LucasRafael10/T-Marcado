@@ -1,13 +1,16 @@
-import { randomBytes, scryptSync, timingSafeEqual } from "node:crypto";
+import { randomBytes, scrypt, timingSafeEqual } from "node:crypto";
+import { promisify } from "node:util";
+const derive = promisify(scrypt);
 export const id = () => randomBytes(18).toString("hex");
-export const hash = (password) => {
+export const hash = async (password) => {
   const salt = id();
-  return salt + ":" + scryptSync(password, salt, 64).toString("hex");
+  return salt + ":" + (await derive(password, salt, 64)).toString("hex");
 };
-export function verify(password, stored) {
+export async function verify(password, stored) {
   const [salt, key] = stored.split(":");
+  if (!salt || !/^[a-f0-9]{128}$/i.test(key || "")) return false;
   return timingSafeEqual(
-    scryptSync(password, salt, 64),
+    await derive(password, salt, 64),
     Buffer.from(key, "hex"),
   );
 }

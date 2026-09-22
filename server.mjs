@@ -7,7 +7,9 @@ import { fail } from "./src/validation.mjs";
 import { get, close } from "./src/database.mjs";
 import { port, appOrigin } from "./src/config.mjs";
 const root = path.dirname(fileURLToPath(import.meta.url));
-await get("SELECT id FROM users LIMIT 1");
+await get("SELECT id,email_verified FROM users LIMIT 1");
+await get("SELECT bucket FROM rate_limits LIMIT 1");
+await get("SELECT token_hash FROM email_verifications LIMIT 1");
 const mime = {
   ".html": "text/html; charset=utf-8",
   ".css": "text/css; charset=utf-8",
@@ -22,10 +24,14 @@ const server = http.createServer(async (req, res) => {
       fail(403, "Host inválido. Confira APP_ORIGIN.");
     res.setHeader("X-Content-Type-Options", "nosniff");
     res.setHeader("Referrer-Policy", "no-referrer");
+    res.setHeader("X-Frame-Options", "DENY");
+    res.setHeader("Permissions-Policy", "camera=(), microphone=(), geolocation=()");
+    if (appOrigin.startsWith("https://"))
+      res.setHeader("Strict-Transport-Security", "max-age=31536000");
     res.setHeader("Cache-Control", "no-store");
     res.setHeader(
       "Content-Security-Policy",
-      "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self'; frame-ancestors 'self'; base-uri 'self'; form-action 'self'",
+      "default-src 'self'; script-src 'self'; script-src-attr 'none'; object-src 'none'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'",
     );
     const url = new URL(req.url, `http://${host}`);
     if (url.pathname === "/health") {

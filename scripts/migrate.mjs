@@ -22,6 +22,8 @@ try {
     ),
   );
   console.log("Personalização dos convites configurada.");
+  await executeMigration(readFileSync(new URL("../supabase/migrations/004_account_security.sql", import.meta.url), "utf8"));
+  console.log("Confirmação de e-mail e limites persistentes configurados.");
 } finally {
   await close();
 }

@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Painel do evento — Tá Marcado</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Libre+Franklin:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+<link rel="stylesheet" href="css/tokens.css">
+<link rel="stylesheet" href="css/base.css">
+<link rel="stylesheet" href="css/painel.css">
+<link rel="stylesheet" href="css/refinements.css">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+</head>
+<body>
+
+<!-- Protótipo: dados fixos no código, sem login real ainda -->
+<div class="proto-banner">Gestão de eventos · Convidados e confirmações em um só lugar.</div>
+
+<div class="topbar">
+  <a href="index.html" class="logo" style="text-decoration:none;"><span class="dot"></span>Tá Marcado</a>
+  <div class="event-name" id="eventTitle">Carregando seu evento…</div>
+  <div style="display:flex; align-items:center; gap:14px;">
+    <a href="login.html" data-logout style="font-size:13px; color:var(--ink-soft); text-decoration:underline;">Sair</a>
+    <div class="avatar">AM</div>
+  </div>
+</div>
+
+<div class="wrap" style="padding-top:32px; padding-bottom:80px;">
+
+  <div class="page-head">
+    <div>
+      <h1>Confirmações de presença</h1>
+      <p>Sua lista em um só lugar. Atualização automática a cada 15 segundos.</p>
+    </div>
+    <div class="export-row">
+      <button class="export-btn" id="exportPDF">Imprimir / PDF</button>
+      <button class="export-btn" id="exportCSV">CSV para Excel</button>
+    </div>
+  </div>
+
+<div class="event-controls"><label for="eventSelect">Evento</label><select id="eventSelect" class="field-input"></select><button class="chip-btn" id="editEvent">Editar evento</button><button class="chip-btn" id="publicInvite">Link de cadastro</button><button class="chip-btn" id="refreshData">Atualizar</button><button class="btn" id="addGuest">Adicionar convidado</button></div><p class="seat-count" id="seatCount"></p>
+  <!-- Cards de estatística: clicáveis, funcionam como atalho de filtro -->
+  <div class="stats" id="statCards">
+    <div class="stat-card" data-filter="todos">
+      <div class="n" id="statTotal">0</div>
+      <div class="l">total de convites</div>
+    </div>
+    <div class="stat-card confirmado" data-filter="confirmado">
+      <div class="n" id="statConfirmado">0</div>
+      <div class="l">convites confirmados</div>
+    </div>
+    <div class="stat-card recusado" data-filter="recusado">
+      <div class="n" id="statRecusado">0</div>
+      <div class="l">recusados</div>
+    </div>
+    <div class="stat-card" data-filter="pendente">
+      <div class="n" id="statPendente">0</div>
+      <div class="l">aguardando resposta</div>
+    </div>
+    <div class="stat-card aprovacao" data-filter="aprovacao">
+      <div class="n" id="statAprovacao">0</div>
+      <div class="l">aguardando aprovação</div>
+    </div>
+  </div>
+
+  <!-- Filtros -->
+  <div class="toolbar">
+    <input type="text" id="searchInput" placeholder="Buscar por nome ou telefone...">
+    <select id="groupFilter">
+      <option value="todos">Todos os grupos</option>
+    </select>
+    <button class="chip-btn" id="btnNaoRespondeu">Quem não respondeu</button>
+    <button class="chip-btn" id="btnLimpar">Limpar filtros</button>
+  </div>
+
+  <!-- Tabela de convidados -->
+  <div class="table-card">
+    <table>
+      <thead>
+        <tr>
+          <th>Convidado</th>
+          <th>Grupo</th>
+          <th>Status</th>
+          <th>Lugares</th>
+          <th>Restrição alimentar</th>
+          <th>Crianças</th>
+          <th>Respondido em</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody id="guestTableBody"></tbody>
+    </table>
+    <div class="empty-state" id="emptyState" style="display:none;">Nenhum convidado encontrado com esse filtro.</div>
+  </div>
+
+  <p class="legend">Os cartões contam convites. O total de pessoas soma os lugares confirmados, incluindo as crianças. As exportações respeitam os filtros atuais.</p>
+
+<div class="management-grid"><section class="management-card"><h2>Lista de presentes</h2><p>Cadastre itens para os convidados reservarem após confirmar. Não há cobrança nesta versão.</p><ul id="managedGifts"></ul><form id="giftForm"><label class="field-label" for="giftName">Nome do presente</label><input class="field-input" id="giftName" type="text"  required><label class="field-label" for="giftValue">Valor de referência (R$)</label><input class="field-input" id="giftValue" type="number" min="0" max="1000000" step="0.01" required><button class="btn">Adicionar presente</button></form></section><section class="management-card"><h2>Acesso do cerimonialista</h2><p>Conceda acesso de leitura a este evento. Se o e-mail já tiver conta de cerimonialista, a senha atual será mantida.</p><form id="accessForm"><label class="field-label" for="accessName">Nome</label><input class="field-input" id="accessName" type="text"  required><label class="field-label" for="accessEmail">E-mail</label><input class="field-input" id="accessEmail" type="email"  required><label class="field-label" for="accessPassword">Senha inicial (conta nova)</label><input class="field-input" id="accessPassword" type="password" minlength="8" autocomplete="new-password" required><button class="btn">Conceder acesso</button></form></section></div><section class="management-card reminder-note"><h2>Lembretes pelo WhatsApp</h2><p>Use “Convite” na lista para revisar e abrir a mensagem no WhatsApp. Compartilhe o link individual para o convidado responder. O envio da mensagem é manual.</p></section></div>
+<!-- ===== Modal: enviar convite pelo WhatsApp ===== -->
+<div class="modal-overlay" id="inviteModal">
+  <div class="modal-card">
+    <button class="modal-close" type="button" onclick="closeInviteModal()" aria-label="Fechar">&times;</button>
+    <span class="mono">enviar convite</span>
+    <h3 id="inviteModalGuestName">—</h3>
+    <p class="modal-sub">Edite a mensagem do jeito que quiser antes de mandar.</p>
+    <label class="field-label" for="inviteMessageText">Mensagem do convite</label><textarea class="message-textarea" id="inviteMessageText" rows="10"></textarea>
+    <div id="invitePhotoTools" hidden><img id="invitePhoto" class="invite-image" alt="Convite por foto"><div class="invite-tools"><button type="button" class="chip-btn" id="sharePhoto">Compartilhar foto e texto</button><a id="downloadPhoto" class="chip-btn" download="convite.png">Baixar foto</a></div><p>Se o compartilhamento de arquivos não estiver disponível, baixe a foto e anexe no WhatsApp junto da mensagem.</p></div>
+    <div class="invite-tools"><a class="btn" id="testInvite" target="_blank" rel="noopener">Testar convite</a><button class="chip-btn" id="copyInvite">Copiar mensagem</button></div><button class="export-btn whatsapp-btn" type="button" onclick="sendViaWhatsApp()">Abrir no WhatsApp</button>
+    <p class="hint-text" style="margin-top:10px;">Cada convite tem um link individual. Compartilhe o link apenas com o convidado correspondente.</p>
+  </div>
+</div>
+
+<div class="modal-overlay" id="guestModal"><div class="modal-card"><button type="button" class="modal-close" onclick="hideModal('guestModal')" aria-label="Fechar">×</button><h3><span id="guestModalTitle">Adicionar convidado</span></h3><form id="guestForm"><input type="hidden" id="guestId"><label class="field-label" for="g-nome">Nome completo</label><input class="field-input" id="g-nome" type="text"  required><label class="field-label" for="g-telefone">Telefone com DDD</label><input class="field-input" id="g-telefone" type="tel"  required><label class="field-label" for="g-grupo">Grupo</label><input class="field-input" id="g-grupo" type="text"  required><label class="field-label" for="g-limite">Limite de pessoas (incluindo crianças)</label><input class="field-input" id="g-limite" type="number" min="1" max="30" required><button class="btn">Salvar convidado</button></form></div></div><div class="modal-overlay" id="editEventModal"><div class="modal-card"><button type="button" class="modal-close" onclick="hideModal('editEventModal')" aria-label="Fechar">×</button><h3>Editar evento</h3><form id="editEventForm"><label class="field-label" for="e-titulo">Nome do evento</label><input class="field-input" id="e-titulo" type="text"  required><label class="field-label" for="e-data">Data</label><input class="field-input" id="e-data" type="date"  required><label class="field-label" for="e-prazo">Confirmar até</label><input class="field-input" id="e-prazo" type="date"  required><label class="field-label" for="e-local">Local</label><input class="field-input" id="e-local" type="text"  required><fieldset class="invite-settings"><legend>Personalizar site e convite</legend>
+<label class="field-label" for="e-cor">Cor do evento</label><input id="e-cor" type="color" value="#2f4a3a"><p>A cor será aplicada ao painel e ao convite. A foto mantém suas cores originais.</p>
+<label class="field-label" for="e-imagem">Convite por foto (opcional)</label><input class="field-input" id="e-imagem" type="file" accept="image/png,image/jpeg,image/webp"><p>PNG, JPEG ou WebP, até 2 MB.</p><img id="imagePreview" class="invite-image" alt="Prévia da foto do convite" hidden><button type="button" class="chip-btn" id="removeImage">Remover imagem</button>
+<label class="field-label" for="e-dresscode">Dress code (opcional)</label><textarea class="field-textarea" id="e-dresscode" maxlength="1000" placeholder="Ex.: Esporte fino. A cerimônia será ao ar livre."></textarea>
+<label class="field-label"><input id="e-presskit" type="checkbox"> Solicitar endereço para envio de press kit</label><p>O convidado poderá informar o endereço no link individual, mesmo se não puder comparecer. O preenchimento é opcional.</p></fieldset><button class="btn">Salvar evento</button></form></div></div><script src="js/app.js"></script>
+<script src="js/painel.js"></script>
+</body>
+</html>

@@ -1,0 +1,20 @@
+import { readFileSync } from "node:fs";
+// Demonstração isolada: não carrega .env nem conecta ao Supabase.
+process.env.NODE_ENV = "test";
+process.env.TEST_DATABASE = "pglite";
+process.env.PORT = "4173";
+process.env.APP_ORIGIN = "http://localhost:4173";
+delete process.env.RESEND_API_KEY;
+delete process.env.EMAIL_FROM;
+const db = await import("../src/database.mjs");
+await db.executeMigration(readFileSync(new URL("../supabase/migrations/002_password_reset.sql", import.meta.url), "utf8"));
+const { user, event, guest } = await import("../src/repository.mjs");
+const owner = await user("Noiva de demonstração", "noiva@teste.local", "Teste123!", "noiva");
+const eid = await event(owner, "Marina & Rafael", "Casamento", "2027-12-12", "Jardim das Flores · Cuiabá", "2027-12-05");
+await db.run("UPDATE events SET cor=?,dresscode=?,presskit=? WHERE id=?", "#824a93", "Esporte fino. A cerimônia será no jardim; prefira sapatos confortáveis.", true, eid);
+const gid = await guest(eid, { nome: "Ana de Teste", telefone: "65999990001", grupo: "Família", limite: 2 });
+const g = await db.get("SELECT token FROM guests WHERE id=?", gid);
+await import("../server.mjs");
+console.log("DEMO_LOGIN: http://localhost:4173/login.html");
+console.log(`DEMO_CONVITE: http://localhost:4173/convite.html?evento=${eid}&token=${g.token}`);
+console.log("Conta de teste: noiva@teste.local / Teste123! (dados apagados ao encerrar)");

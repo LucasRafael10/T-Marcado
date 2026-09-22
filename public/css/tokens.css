@@ -1,0 +1,30 @@
+/* ==========================================================================
+   TOKENS
+   Variáveis de design (cores, fontes, espaçamentos).
+   Se for trocar a identidade visual do site, comece por aqui.
+   ========================================================================== */
+
+:root {
+  /* Cores base */
+  --ink:         #212f24; /* texto principal */
+  --ink-soft:    #3d4a3c; /* texto secundário */
+  --paper:       #f5efe2; /* fundo da página */
+  --paper-raised:#fbf8f0; /* fundo de cards, elementos "elevados" */
+
+  /* Cores de marca */
+  --green:       #2f4a3a; /* botões, destaques */
+  --green-deep:  #1c2e23; /* títulos, fundo escuro (footer, CTA final) */
+  --gold:        #b0813f; /* selos, labels em caixa alta */
+  --gold-soft:   #d8b878; /* detalhes decorativos */
+  --rose:        #c07d6f; /* acento secundário (selo do convite, tags) */
+
+  /* Utilitários */
+  --line:        #d8c9a5; /* bordas e divisórias */
+  --shadow: 0 20px 50px -25px rgba(28, 46, 35, 0.45);
+  --radius: 2px;
+
+  /* Tipografia */
+  --font-display: 'Cormorant Garamond', serif;
+  --font-body:    'Libre Franklin', sans-serif;
+  --font-mono:    'IBM Plex Mono', monospace;
+}

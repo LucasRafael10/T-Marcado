@@ -1,0 +1,111 @@
+/* ==========================================================================
+   CERIMONIALISTA.CSS
+   Estilos específicos do painel da cerimonialista (listagem de eventos +
+   detalhe de convidados em modo leitura). Reaproveita .badge, .table-card,
+   table, .chip-btn e afins de painel.css — aqui só o que é exclusivo
+   dessa página.
+   ========================================================================== */
+
+/* --- barra de busca no topo da listagem --- */
+.cerim-toolbar {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 22px;
+}
+
+.cerim-toolbar input[type="text"] {
+  flex: 1;
+  padding: 11px 14px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  font-family: var(--font-body);
+  font-size: 14px;
+  background: var(--paper-raised);
+  color: var(--ink);
+}
+
+/* --- grid de cards de evento --- */
+.event-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 18px;
+  margin-bottom: 40px;
+}
+
+.event-card {
+  background: var(--paper-raised);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 22px;
+  cursor: pointer;
+  transition: border-color 0.15s ease, transform 0.15s ease;
+}
+
+.event-card:hover { border-color: var(--gold); transform: translateY(-2px); }
+.event-card.selected { border-color: var(--green); box-shadow: inset 0 0 0 1px var(--green); }
+
+.event-card .tipo { font-size: 11px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--gold); font-weight: 700; }
+.event-card .titulo { font-family: var(--font-display); font-size: 22px; color: var(--green-deep); margin: 6px 0 4px; }
+.event-card .conta { font-size: 12px; color: var(--ink-soft); margin-bottom: 14px; }
+
+.event-card .days-badge {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 12px;
+  background: var(--paper);
+  color: var(--ink-soft);
+  margin-bottom: 14px;
+}
+
+.event-card .days-badge.soon { background: #f6e9c9; color: #8a6a20; }
+.event-card .days-badge.past { background: #eee; color: #999; }
+
+.event-card .mini-stats { display: flex; gap: 14px; flex-wrap: wrap; }
+.event-card .mini-stat { font-size: 12px; color: var(--ink-soft); }
+.event-card .mini-stat strong { display: block; font-family: var(--font-display); font-size: 20px; color: var(--green-deep); }
+.event-card .mini-stat.confirmado strong { color: var(--green); }
+.event-card .mini-stat.recusado strong { color: var(--rose); }
+.event-card .mini-stat.aprovacao strong { color: var(--gold); }
+
+/* --- painel de detalhe (somente leitura) --- */
+.detail-panel { display: none; }
+.detail-panel.show { display: block; }
+
+.detail-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  gap: 14px;
+  margin-bottom: 20px;
+}
+
+.detail-head h2 { font-size: 26px; }
+.detail-head .conta-sub { font-size: 13px; color: var(--ink-soft); margin-top: 4px; }
+
+.readonly-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--ink-soft);
+  background: var(--paper);
+  border: 1px solid var(--line);
+  padding: 6px 12px;
+  border-radius: 20px;
+}
+
+.back-link {
+  background: none;
+  border: none;
+  color: var(--green-deep);
+  font-weight: 600;
+  font-size: 13px;
+  cursor: pointer;
+  margin-bottom: 18px;
+  padding: 0;
+  text-decoration: underline;
+}

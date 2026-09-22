@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Recuperar senha — Tá Marcado</title>
+    <link rel="stylesheet" href="css/tokens.css" />
+    <link rel="stylesheet" href="css/login.css" />
+  </head>
+  <body class="login-body">
+    <main class="login-shell">
+      <div class="login-logo">Tá Marcado</div>
+      <div class="login-card">
+        <h1>Esqueci minha senha</h1>
+        <p class="login-sub">
+          Informe o e-mail da sua conta para receber um link de recuperação.
+        </p>
+        <form id="recoveryForm">
+          <label class="field-label" for="email">E-mail</label
+          ><input
+            class="field-input"
+            id="email"
+            type="email"
+            autocomplete="email"
+            maxlength="254"
+            required
+          /><button class="big-btn primary" type="submit">Enviar link</button>
+        </form>
+        <p id="message" role="status" aria-live="polite"></p>
+      </div>
+      <p class="login-footnote"><a href="login.html">Voltar para entrar</a></p>
+    </main>
+    <script src="js/recovery.js"></script>
+  </body>
+</html>

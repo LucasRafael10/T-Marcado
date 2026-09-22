@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-labelledby="title">
+  <title id="title">Tá Marcado — calendário confirmado</title>
+  <rect width="64" height="64" rx="16" fill="#2f4a3a"/>
+  <path d="M17 24h30M22 17v13M42 17v13" fill="none" stroke="#d8b878" stroke-width="3.4" stroke-linecap="round"/>
+  <rect x="14.5" y="20.5" width="35" height="30" rx="5.5" fill="none" stroke="#f5efe2" stroke-width="3"/>
+  <path d="m23.5 37 5.5 5.5 11.5-12" fill="none" stroke="#d8b878" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

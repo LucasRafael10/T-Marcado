@@ -1,9 +1,0 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 344 72" role="img" aria-labelledby="title desc">
-  <title id="title">Tá Marcado</title>
-  <desc id="desc">Calendário verde com uma marca dourada de confirmação, ao lado do nome Tá Marcado.</desc>
-  <rect x="4" y="8" width="56" height="56" rx="14" fill="#2f4a3a"/>
-  <path d="M19 29h26M23.5 22v11M40.5 22v11" fill="none" stroke="#d8b878" stroke-width="3" stroke-linecap="round"/>
-  <rect x="17" y="25" width="30" height="27" rx="5" fill="none" stroke="#f5efe2" stroke-width="2.7"/>
-  <path d="m24.5 39 5 5 10-11" fill="none" stroke="#d8b878" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
-  <text x="76" y="45" fill="#1c2e23" font-family="Cormorant Garamond, Georgia, serif" font-weight="600" font-size="43" letter-spacing="-.7">Tá Marcado</text>
-</svg>

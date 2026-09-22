@@ -13,7 +13,7 @@ export function emailDiagnostic(error) {
   return "Falha no envio. Confira conexão, RESEND_API_KEY, EMAIL_FROM e os registros no painel Resend.";
 }
 
-export async function sendEmail(to, subject, text) {
+export async function sendEmail(to, subject, text, html) {
   if (!process.env.RESEND_API_KEY || !process.env.EMAIL_FROM)
     throw new Error("Configure RESEND_API_KEY e EMAIL_FROM no Render.");
   const response = await fetch("https://api.resend.com/emails", {
@@ -27,6 +27,7 @@ export async function sendEmail(to, subject, text) {
       to: [to],
       subject,
       text,
+      ...(html ? { html } : {}),
     }),
     signal: AbortSignal.timeout(10000),
   });

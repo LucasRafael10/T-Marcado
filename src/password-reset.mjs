@@ -4,6 +4,7 @@ import { hash } from "./passwords.mjs";
 import { appOrigin } from "./config.mjs";
 import { fail } from "./validation.mjs";
 import { sendEmail, emailDiagnostic } from "./email.mjs";
+import { resetEmailHtml, passwordChangedEmailHtml } from "./email-templates.mjs";
 
 const digest = (token) => createHash("sha256").update(token).digest("hex");
 const message =
@@ -54,10 +55,12 @@ async function deliverReset(email) {
   });
   if (!user) return;
   try {
+    const resetUrl = `${appOrigin}/redefinir-senha.html#token=${token}`;
     await sendEmail(
       user.email,
       "Redefina sua senha — Tá Marcado",
-      `Recebemos um pedido para trocar sua senha.\n\nAbra este link, válido por 30 minutos:\n${appOrigin}/redefinir-senha.html#token=${token}\n\nSe você não solicitou, ignore este e-mail. Sua senha permanece igual.`,
+      `Recebemos um pedido para trocar sua senha.\n\nAbra este link, válido por 30 minutos:\n${resetUrl}\n\nSe você não solicitou, ignore este e-mail. Sua senha permanece igual.`,
+      resetEmailHtml(resetUrl),
     );
   } catch (error) {
     console.error(emailDiagnostic(error));
@@ -108,6 +111,7 @@ export async function resetPassword(token, password) {
     user.email,
     "Sua senha foi alterada — Tá Marcado",
     "Sua senha foi alterada. Entre novamente no site com a nova senha. Se não foi você, solicite uma nova recuperação e contate o responsável pelo site.",
+    passwordChangedEmailHtml(),
   ).catch(() =>
     console.error("Falha ao enviar confirmação da troca de senha."),
   );

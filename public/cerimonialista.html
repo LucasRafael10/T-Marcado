@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Painel da cerimonialista — Tá Marcado</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Libre+Franklin:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+<link rel="stylesheet" href="css/tokens.css">
+<link rel="stylesheet" href="css/base.css">
+<link rel="stylesheet" href="css/painel.css">
+<link rel="stylesheet" href="css/cerimonialista.css">
+<link rel="stylesheet" href="css/refinements.css">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+</head>
+<body>
+
+<div class="proto-banner">Gestão de eventos · Convidados e confirmações em um só lugar.</div>
+
+<div class="topbar">
+  <a href="index.html" class="logo" style="text-decoration:none;"><span class="dot"></span>Tá Marcado</a>
+  <div class="event-name">Painel da cerimonialista · <strong id="plannerName">—</strong></div>
+  <a href="login.html" data-logout style="font-size:13px; color:var(--ink-soft); text-decoration:underline;">Sair</a>
+</div>
+
+<div class="wrap" style="padding-top:32px; padding-bottom:80px;">
+
+  <!-- ===== LISTAGEM DE EVENTOS ===== -->
+  <div id="eventListSection">
+    <div class="page-head">
+      <div>
+        <h1>Seus eventos</h1>
+        <p>Todos os eventos que você atende, de contas diferentes, num só lugar — ordenados do mais próximo pro mais distante.</p>
+      </div>
+    </div>
+
+    <div class="cerim-toolbar">
+      <input type="text" id="eventSearch" placeholder="Buscar por nome do evento ou tipo...">
+    </div>
+
+    <div class="event-grid" id="eventGrid"></div>
+  </div>
+
+  <!-- ===== DETALHE DE UM EVENTO (somente leitura) ===== -->
+  <div id="detailPanel" class="detail-panel">
+    <button type="button" class="back-link" id="backToList">← Voltar para todos os eventos</button>
+
+    <div class="detail-head">
+      <div>
+        <h2 id="detailTitle">—</h2>
+        <div class="conta-sub" id="detailSub">—</div>
+      </div>
+      <span class="readonly-tag">👁 Somente leitura — edição pelo organizador</span>
+    </div>
+
+    <div class="toolbar">
+      <input type="text" id="detailSearch" placeholder="Buscar por nome ou telefone...">
+      <button class="chip-btn detail-chip active" data-status="todos">Todos</button>
+      <button class="chip-btn detail-chip" data-status="confirmado">Confirmados</button>
+      <button class="chip-btn detail-chip" data-status="recusado">Recusados</button>
+      <button class="chip-btn detail-chip" data-status="pendente">Pendentes</button>
+      <button class="chip-btn detail-chip" data-status="aprovacao">Aprovação</button>
+    </div>
+
+    <div class="table-card">
+      <table>
+        <thead>
+          <tr>
+            <th>Convidado</th>
+            <th>Status</th>
+            <th>Lugares</th>
+            <th>Restrição alimentar</th>
+            <th>Crianças</th>
+            <th>Respondido em</th>
+          </tr>
+        </thead>
+        <tbody id="detailTableBody"></tbody>
+      </table>
+      <div class="empty-state" id="detailEmptyState" style="display:none;">Nenhum convidado encontrado com esse filtro.</div>
+    </div>
+  </div>
+
+</div>
+
+<script src="js/app.js"></script>
+<script src="js/cerimonialista.js"></script>
+</body>
+</html>

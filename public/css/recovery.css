@@ -1,0 +1,48 @@
+/* A mesma identidade da tela de entrada, com espaço para instruções e retorno. */
+.recovery-body {
+  background: radial-gradient(circle at 8% 8%, rgba(216,184,120,.21), transparent 28%),
+              radial-gradient(circle at 92% 86%, rgba(47,74,58,.10), transparent 30%),
+              var(--paper);
+}
+.recovery-shell { max-width: 460px; }
+.recovery-logo {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 7px;
+  text-decoration: none;
+}
+.recovery-logo .dot { margin-right: 0; }
+.recovery-card { padding: clamp(26px, 5vw, 38px); }
+.recovery-eyebrow {
+  margin: 0 0 12px;
+  text-transform: uppercase;
+  letter-spacing: .12em;
+  font: 600 11px var(--font-mono);
+  color: var(--gold);
+  text-align: center;
+}
+.recovery-card .login-title { margin: 0 0 12px; font-size: clamp(30px, 7vw, 38px); }
+.recovery-card .login-sub { margin: 0 0 22px; font-size: 14px; }
+.recovery-card .field-label { font-size: 14px; }
+.recovery-card .field-input { min-height: 48px; font-size: 16px; }
+.recovery-card .big-btn { min-height: 48px; }
+.recovery-card .big-btn:disabled { opacity: .6; cursor: wait; }
+.recovery-hint { margin: 8px 0 0; font-size: 12px; color: var(--ink-soft); }
+.recovery-message:not(:empty) {
+  margin: 22px 0 0;
+  padding: 13px 15px;
+  border-radius: 8px;
+  background: #e5efe6;
+  color: var(--green-deep);
+  font-size: 14px;
+  line-height: 1.5;
+}
+.recovery-message[data-state="error"] { background: #fae9e5; color: #8b352e; }
+.recovery-message[data-state="loading"] { background: #eee8da; }
+.recovery-footnote { font-size: 14px; }
+.recovery-footnote a:focus-visible, .recovery-logo:focus-visible { outline: 3px solid var(--gold); outline-offset: 4px; }
+@media (max-width: 640px) {
+  .recovery-body { align-items: center !important; }
+  .recovery-shell { margin: auto 0; }
+}

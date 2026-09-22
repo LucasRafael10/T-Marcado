@@ -1,0 +1,135 @@
+/* ==========================================================================
+   LOGIN.CSS
+   Tela de entrada com duas abas: Organizador(a) do evento e Cerimonialista.
+   Mesma linguagem visual do resto do site (cartão mobile-first, como o
+   convite.html), cores e fontes vêm de tokens.css.
+   ========================================================================== */
+
+body.login-body {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px 16px;
+}
+
+.login-shell { width: 100%; max-width: 400px; }
+
+.login-logo {
+  text-align: center;
+  font-family: var(--font-display);
+  font-size: 24px;
+  font-weight: 600;
+  color: var(--green-deep);
+  margin-bottom: 24px;
+}
+
+.login-logo .dot {
+  width: 6px; height: 6px; border-radius: 50%; background: var(--rose);
+  display: inline-block; margin-right: 6px;
+}
+
+.login-card {
+  background: var(--paper-raised);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 30px 26px;
+  box-shadow: var(--shadow);
+}
+
+/* --- abas de papel (noiva x cerimonialista) --- */
+.role-tabs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 4px;
+  margin-bottom: 22px;
+}
+
+.role-tab {
+  padding: 11px 8px;
+  border-radius: 6px;
+  border: none;
+  background: transparent;
+  font-family: var(--font-body);
+  font-weight: 600;
+  font-size: 13px;
+  color: var(--ink-soft);
+  cursor: pointer;
+  text-align: center;
+  line-height: 1.3;
+}
+
+.role-tab.active { background: var(--green); color: #fff; }
+
+.login-sub { font-size: 13px; color: var(--ink-soft); text-align: center; margin-bottom: 20px; line-height: 1.5; }
+
+.field-label {
+  display: block;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ink-soft);
+  margin: 14px 0 6px;
+}
+
+.field-input {
+  width: 100%;
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  font-family: var(--font-body);
+  font-size: 14px;
+  background: #fff;
+  color: var(--ink);
+}
+
+.field-input:focus { outline: 2px solid var(--gold); outline-offset: 1px; }
+
+.login-error {
+  display: none;
+  font-size: 12.5px;
+  color: #a3453a;
+  margin-top: 10px;
+}
+
+.login-error.show { display: block; }
+
+.big-btn.primary {
+  width: 100%;
+  padding: 14px;
+  border-radius: 8px;
+  border: none;
+  background: var(--green);
+  color: #fff;
+  font-family: var(--font-body);
+  font-weight: 700;
+  font-size: 14.5px;
+  cursor: pointer;
+  margin-top: 20px;
+}
+
+.big-btn.primary:hover { background: var(--green-deep); }
+
+.login-footnote {
+  text-align: center;
+  font-size: 12px;
+  color: var(--ink-soft);
+  margin-top: 18px;
+  line-height: 1.6;
+}
+
+.login-footnote a { color: var(--green-deep); font-weight: 600; text-decoration: underline; }
+
+.demo-banner {
+  background: var(--gold-soft);
+  color: var(--green-deep);
+  text-align: center;
+  font-size: 12.5px;
+  font-weight: 600;
+  padding: 9px 16px;
+  border-radius: 6px;
+  margin-bottom: 20px;
+}

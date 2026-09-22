@@ -4,6 +4,8 @@ import { id, verify } from "./passwords.mjs";
 import { user, event, guest } from "./repository.mjs";
 import { auth, allowed, guestAuth, loginCookie } from "./auth.mjs";
 import { requestReset, resetPassword } from "./password-reset.mjs";
+import { requestVerification, verifyEmail, requireEmailDelivery } from "./email-verification.mjs";
+import { limitRequest } from "./rate-limit.mjs";
 import {
   fail,
   txt,
@@ -14,26 +16,17 @@ import {
   today,
   deadline,
 } from "./validation.mjs";
-const rates = new Map();
-function limit(req, key, max = 30) {
-  const k = req.socket.remoteAddress + key,
-    now = Date.now();
-  for (const [entry, value] of rates)
-    if (value.until < now) rates.delete(entry);
-  let r = rates.get(k);
-  if (!r || r.until < now) r = { n: 0, until: now + 60000 };
-  rates.set(k, r);
-  if (++r.n > max) fail(429, "Muitas tentativas. Aguarde um minuto.");
-}
 async function body(req) {
   const max =
     req.method === "PATCH" && /^\/api\/events\/[a-f0-9]+(?:\?|$)/.test(req.url)
       ? 3000000
       : 100000;
   let data = "";
+  let size = 0;
   for await (const chunk of req) {
+    size += chunk.length;
+    if (size > max) fail(413, "Dados muito grandes.");
     data += chunk;
-    if (data.length > max) fail(413, "Dados muito grandes.");
   }
   try {
     return JSON.parse(data || "{}");
@@ -49,6 +42,7 @@ export async function api(req, res, url) {
   const b = m === "GET" ? {} : await body(req);
   if (!b || typeof b !== "object" || Array.isArray(b))
     fail(400, "Dados inválidos.");
+  if (m !== "GET") await limitRequest(req, p, b);
   const eventId = p.match(/^\/api\/events\/([a-f0-9]+)(?:\/|$)/)?.[1];
   if (eventId && m !== "GET") {
     // Serializa alterações do mesmo evento, inclusive confirmação e reserva.
@@ -63,16 +57,15 @@ export async function api(req, res, url) {
 async function route(req, res, url, b) {
   const p = url.pathname,
     m = req.method;
+  if (p === "/api/request-verification" && m === "POST") return requestVerification(b.email);
+  if (p === "/api/verify-email" && m === "POST") return verifyEmail(b.token, b.password, b.passwordConfirm);
   if (p === "/api/forgot-password" && m === "POST") {
-    limit(req, "forgot-password", 10);
     return requestReset(b.email);
   }
   if (p === "/api/reset-password" && m === "POST") {
-    limit(req, "reset-password", 10);
     return resetPassword(b.token, b.password);
   }
   if (p === "/api/login" && m === "POST") {
-    limit(req, "login", 12);
     const u = await get(
       "SELECT * FROM users WHERE email=?",
       String(b.email || "")
@@ -83,10 +76,11 @@ async function route(req, res, url, b) {
       !u ||
       typeof b.password !== "string" ||
       b.password.length > 256 ||
-      !verify(b.password, u.password) ||
+      !(await verify(b.password, u.password)) ||
       u.role !== b.role
     )
       fail(401, "E-mail, senha ou perfil incorreto.");
+    if (!u.email_verified) fail(403, "Confirme seu e-mail antes de entrar. Use Reenviar confirmação abaixo ou recupere sua senha.");
     await loginCookie(res, u.id);
     return { role: u.role };
   }
@@ -102,7 +96,6 @@ async function route(req, res, url, b) {
     return { ok: true };
   }
   if (p === "/api/register" && m === "POST") {
-    limit(req, "register", 10);
     const nome = txt(b.nome, "Nome"),
       email = txt(b.email, "E-mail").toLowerCase(),
       password = txt(b.password, "Senha", 256);
@@ -122,13 +115,14 @@ async function route(req, res, url, b) {
     const titulo = txt(b.titulo, "Nome do evento"),
       tipo = txt(b.tipo, "Tipo"),
       local = txt(b.local, "Local");
-    const uid = await transaction(async () => {
+    requireEmailDelivery();
+    await transaction(async () => {
       const uid = await user(nome, email, password, "noiva");
       await event(uid, titulo, tipo, data, local, prazo);
       return uid;
     });
-    await loginCookie(res, uid);
-    return { ok: true };
+    await requestVerification(email);
+    return { ok: true, verificationRequired: true };
   }
   if (p === "/api/me" && m === "GET") return await auth(req);
   if (p === "/api/events" && m === "GET") {
@@ -184,7 +178,6 @@ async function route(req, res, url, b) {
       };
     }
     if (action === "identify" && m === "POST") {
-      limit(req, "identify", 15);
       const g = await guestAuth(eid, b.token);
       if (norm(String(b.nome || "")) !== norm(g.nome))
         fail(400, "Digite o nome completo que aparece no seu convite.");
@@ -200,7 +193,6 @@ async function route(req, res, url, b) {
       };
     }
     if (action === "self-register" && m === "POST") {
-      limit(req, "self-register", 10);
       const e =
         (await get("SELECT * FROM events WHERE id=?", eid)) ||
         fail(404, "Evento não encontrado.");
@@ -425,14 +417,13 @@ async function route(req, res, url, b) {
       const email = txt(b.email, "E-mail").toLowerCase();
       let u = await get("SELECT * FROM users WHERE email=?", email);
       if (!u) {
-        const password = txt(b.password, "Senha inicial", 256);
-        if (password.length < 8 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))
-          fail(400, "Use e-mail válido e senha de pelo menos 8 caracteres.");
+        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) fail(400, "Use um e-mail válido.");
+        requireEmailDelivery();
         u = {
           id: await user(
             txt(b.nome, "Nome"),
             email,
-            password,
+            id() + id(),
             "cerimonialista",
           ),
           role: "cerimonialista",
@@ -445,6 +436,7 @@ async function route(req, res, url, b) {
         eid,
         u.id,
       );
+      if (!u.email_verified) await requestVerification(email);
       return { ok: true };
     }
   }

@@ -100,11 +100,12 @@ export async function resetPassword(token, password) {
     );
     if (!valid) fail(400, "Link inválido ou expirado. Solicite outro.");
     await run(
-      "UPDATE users SET password=? WHERE id=?",
-      hash(password),
+      "UPDATE users SET password=?,email_verified=true WHERE id=?",
+      await hash(password),
       user.id,
     );
     await run("DELETE FROM sessions WHERE user_id=?", user.id);
+    await run("DELETE FROM email_verifications WHERE user_id=?", user.id);
     return user;
   });
   void sendEmail(

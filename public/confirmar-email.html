@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="referrer" content="no-referrer">
+  <title>Confirmar e-mail — Tá Marcado</title>
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/login.css">
+  <link rel="stylesheet" href="css/refinements.css">
+  <link rel="stylesheet" href="css/recovery.css">
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+</head>
+<body class="login-body recovery-body">
+  <main class="login-shell recovery-shell">
+    <a class="login-logo recovery-logo" href="index.html"><img src="logo-mark.svg" alt="" width="30" height="30">Tá Marcado</a>
+    <section class="login-card recovery-card">
+      <p class="recovery-eyebrow">Segurança da sua conta</p>
+      <h1 class="login-title" id="title">Confirme seu e-mail</h1>
+      <p class="login-sub" id="instructions">Informe o e-mail da sua conta para receber um novo link de confirmação.</p>
+      <form id="verificationForm">
+        <div id="emailFields">
+          <label class="field-label" for="email">E-mail</label>
+          <input class="field-input" id="email" name="email" type="email" autocomplete="email" maxlength="254" required>
+        </div>
+        <div id="passwordFields" hidden>
+          <label class="field-label" for="password">Defina sua senha</label>
+          <input class="field-input" id="password" type="password" autocomplete="new-password" minlength="8" maxlength="256" disabled required>
+          <label class="field-label" for="confirm">Confirme sua senha</label>
+          <input class="field-input" id="confirm" type="password" autocomplete="new-password" minlength="8" maxlength="256" disabled required>
+          <p class="recovery-hint">Use pelo menos 8 caracteres. Esta será sua senha para entrar no site.</p>
+        </div>
+        <button class="big-btn primary" type="submit" id="submit">Reenviar confirmação</button>
+      </form>
+      <p id="message" class="recovery-message" role="status" aria-live="polite"></p>
+    </section>
+    <p class="login-footnote"><a href="login.html">Voltar para entrar</a> · <a href="confirmar-email.html">Pedir outro link</a> · <a href="esqueci-senha.html">Recuperar senha</a></p>
+  </main>
+  <script src="js/verification.js"></script>
+</body>
+</html>

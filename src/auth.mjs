@@ -9,7 +9,7 @@ export async function session(req) {
   return (
     token &&
     (await get(
-      "SELECT u.id,u.nome,u.email,u.role FROM sessions s JOIN users u ON s.user_id=u.id WHERE s.token=? AND s.expires>?",
+      "SELECT u.id,u.nome,u.email,u.role FROM sessions s JOIN users u ON s.user_id=u.id WHERE s.token=? AND s.expires>? AND u.email_verified=true",
       token,
       Date.now(),
     ))

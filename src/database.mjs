@@ -21,6 +21,8 @@ if (process.env.NODE_ENV === "test" && process.env.TEST_DATABASE === "pglite") {
       "utf8",
     ),
   );
+  for (const file of ["002_password_reset.sql", "004_account_security.sql"])
+    await pool.exec(readFileSync(new URL(`../supabase/migrations/${file}`, import.meta.url), "utf8"));
 } else {
   if (!process.env.DATABASE_URL)
     throw new Error(
@@ -31,14 +33,17 @@ if (process.env.NODE_ENV === "test" && process.env.TEST_DATABASE === "pglite") {
   for (const key of ["sslmode", "sslcert", "sslkey", "sslrootcert"])
     connection.searchParams.delete(key);
 
+  // Nunca aceite o certificado do banco sem conferir sua cadeia de confiança.
+  // A CA do Supabase é necessária quando a cadeia não está no armazenamento do Node.
+  const ca = process.env.DATABASE_CA_CERT?.replace(/\\n/g, "\n");
   pool = new pg.Pool({
     connectionString: connection.toString(),
     max: 5,
     connectionTimeoutMillis: 10000,
     idleTimeoutMillis: 30000,
     ssl: {
-      // Necessário no Render/Supabase quando a cadeia inclui certificado intermediário autoassinado.
-      rejectUnauthorized: false,
+      rejectUnauthorized: true,
+      ...(ca ? { ca } : {}),
     },
   });
 

@@ -10,7 +10,12 @@ function toggleEnvelope() {
   el.setAttribute("aria-expanded", el.classList.contains("open"));
 }
 document.addEventListener("DOMContentLoaded", () => {
+  document.querySelectorAll('[data-action="open-event-form"]').forEach((button) =>
+    button.addEventListener("click", openEventForm),
+  );
+  document.querySelector('[data-action="close-event-form"]')?.addEventListener("click", closeEventForm);
   const envelope = $("envelope");
+  envelope.addEventListener("click", toggleEnvelope);
   envelope.setAttribute("role", "button");
   envelope.tabIndex = 0;
   envelope.setAttribute("aria-label", "Abrir ou fechar exemplo de convite");
@@ -63,7 +68,7 @@ document.addEventListener("DOMContentLoaded", () => {
         prazo: $("f-prazo").value,
         local: $("f-local").value,
       });
-      location.href = "painel.html";
+      location.href = "confirmar-email.html?enviado=1";
     });
   };
   $("f-password-confirm").addEventListener("input", () =>

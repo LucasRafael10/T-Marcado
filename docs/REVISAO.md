@@ -15,15 +15,15 @@ Tokens aleatórios de recuperação com hash no banco, validade de 30 minutos, u
 
 ## Pendências prioritárias
 
-1. src/database.mjs usa rejectUnauthorized: false. A conexão é cifrada, mas não valida o certificado do servidor. Configurar CA confiável do provedor e ativar validação antes de produção; não alterado automaticamente para evitar interromper a conexão existente sem a cadeia de certificados.
+1. Corrigido em revisão posterior: src/database.mjs valida o certificado do banco. Configure DATABASE_CA_CERT no Render antes de publicar; veja SEGURANCA.md.
 2. src/password-reset.mjs envia em segundo plano, sem fila persistente. Reinício pode perder envio após a resposta ao navegador. Para entrega resiliente, implementar outbox no banco com worker, tentativas limitadas e idempotência.
-3. src/api.mjs limita tentativas usando req.socket.remoteAddress e memória local. Atrás do proxy Render usuários podem compartilhar limite; múltiplas instâncias não compartilham contadores. Validar a cadeia de proxies antes de confiar em headers e usar armazenamento compartilhado se escalar.
-4. Cadastro não confirma posse do e-mail. Recuperação não substitui verificação de cadastro. Adicionar fluxo independente com token e estado email_verified se necessário.
-5. src/passwords.mjs usa scryptSync; sob carga, cálculo bloqueia o servidor. Migrar para scrypt assíncrono com controle de concorrência.
-6. A CSP permite script unsafe-inline. Remover scripts inline antes de endurecer a política.
+3. Corrigido: limites persistentes no PostgreSQL. A identificação de IP atrás do proxy ainda requer validação da topologia; veja ATIVAR-SEGURANCA.md.
+4. Corrigido: cadastro exige confirmação de e-mail antes de permitir login. Instalar a migração 004 e configurar entrega real no Resend.
+5. Corrigido em revisão posterior: src/passwords.mjs usa scrypt assíncrono.
+6. Corrigido em revisão posterior: a CSP bloqueia scripts inline e os controles das páginas usam listeners nos arquivos JavaScript.
 
 Não foram alterados visual, gestão de eventos ou banco de produção. Nenhuma conta externa foi configurada e nenhum e-mail real foi enviado nesta revisão.
 
 ## Validação executada
 
-`npm test`: 14 testes aprovados, zero falhas. PostgreSQL embutido PGlite e Resend simulada; cobre recuperação, expiração, uso único, revogação de sessões, falha de envio e regressões da API. Não comprova entrega de e-mail real nem comportamento do proxy de produção.
+`npm test`: 18 testes aprovados, zero falhas. PostgreSQL embutido PGlite e Resend simulada; cobre recuperação, expiração, uso único, revogação de sessões, falha de envio e regressões da API. Não comprova entrega de e-mail real nem comportamento do proxy de produção.

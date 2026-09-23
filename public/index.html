@@ -26,7 +26,7 @@
       <a href="login.html">Acessar o painel</a>
     </div>
     <a href="login.html" style="font-size:14px; font-weight:600; text-decoration:none; opacity:.75;">Entrar</a>
-    <button type="button" class="btn" onclick="openEventForm()">Criar meu evento</button>
+    <button type="button" class="btn" data-action="action0">Criar meu evento</button>
   </nav>
 </header>
 
@@ -37,7 +37,7 @@
     <h1>Chega de planilha<br>e grupo de <em>WhatsApp</em><br>lotado de "vou sim!"</h1>
     <p class="lead">O Tá Marcado organiza a confirmação de presença e a lista de presentes do seu evento num link só — feito para funcionar até para a avó de 78 anos, no celular dela.</p>
     <div class="cta-row">
-      <button type="button" class="btn" onclick="openEventForm()">Criar meu evento grátis</button>
+      <button type="button" class="btn" data-action="action0">Criar meu evento grátis</button>
       <a href="#como-funciona" class="btn ghost">Ver como funciona</a>
     </div>
     <div class="trust-row">
@@ -49,7 +49,7 @@
 
   <div class="envelope-stage">
     <div>
-      <div class="envelope" id="envelope" onclick="toggleEnvelope()">
+      <div class="envelope" id="envelope" data-action="action1">
         <div class="env-back">
           <div class="card">
             <div class="k1">você está convidado(a)</div>
@@ -182,14 +182,14 @@
   <div class="final-cta">
     <h2>Seu evento organizado<br>em um link só</h2>
     <p>Cadastre sua lista, dispare o convite e acompanhe as confirmações com atualização automática — sem planilha, sem app para o convidado instalar.</p>
-    <button type="button" class="btn" onclick="openEventForm()" style="background:var(--gold-soft); color:var(--green-deep);">Criar meu evento grátis</button>
+    <button type="button" class="btn" data-action="action0" style="background:var(--gold-soft); color:var(--green-deep);">Criar meu evento grátis</button>
   </div>
 </section>
 
 <!-- Criar conta e evento pelo servidor -->
 <div class="modal-overlay" id="eventModal">
   <div class="modal-card">
-    <button class="modal-close" type="button" onclick="closeEventForm()" aria-label="Fechar">&times;</button>
+    <button class="modal-close" type="button" data-action="action2" aria-label="Fechar">&times;</button>
 
     <div class="modal-body" id="modalFormView">
       <span class="mono">vamos começar</span>

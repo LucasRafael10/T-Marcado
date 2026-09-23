@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="referrer" content="no-referrer">
+  <title>Confirmar e-mail — Tá Marcado</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Libre+Franklin:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/tokens.css">
+  <link rel="stylesheet" href="css/base.css">
+  <link rel="stylesheet" href="css/login.css">
+  <link rel="stylesheet" href="css/refinements.css">
+  <link rel="stylesheet" href="css/recovery.css">
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+</head>
+<body data-mode="resend" class="login-body recovery-body">
+  <main class="login-shell recovery-shell">
+    <a class="login-logo recovery-logo" href="index.html"><span class="dot"></span>Tá Marcado</a>
+    <section class="login-card recovery-card" aria-labelledby="page-title">
+      <p class="recovery-eyebrow">Sua conta</p>
+      <h1 class="login-title" id="page-title">Confirme seu e-mail</h1>
+      <p class="login-sub">Informe seu e-mail para receber um novo link de confirmação.</p>
+      <form id="recoveryForm">
+        <label class="field-label" for="email">E-mail cadastrado</label>
+        <input class="field-input" id="email" name="email" type="email" autocomplete="email" inputmode="email" placeholder="voce@email.com" maxlength="254" required>
+        <button class="big-btn primary" type="submit">Enviar link de recuperação</button>
+      </form>
+      <p id="message" class="recovery-message" role="status" aria-live="polite"></p>
+    </section>
+    <p class="login-footnote recovery-footnote"><a href="login.html">Voltar para entrar</a></p>
+  </main>
+  <script src="js/recovery.js"></script>
+</body>
+</html>

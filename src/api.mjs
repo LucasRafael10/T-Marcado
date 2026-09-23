@@ -14,29 +14,27 @@ import {
   today,
   deadline,
 } from "./validation.mjs";
-const rates = new Map();
-function limit(req, key, max = 30) {
-  const k = req.socket.remoteAddress + key,
-    now = Date.now();
-  for (const [entry, value] of rates)
-    if (value.until < now) rates.delete(entry);
-  let r = rates.get(k);
-  if (!r || r.until < now) r = { n: 0, until: now + 60000 };
-  rates.set(k, r);
-  if (++r.n > max) fail(429, "Muitas tentativas. Aguarde um minuto.");
-}
+import { limit, consume } from "./rate-limit.mjs";
+import {
+  requireEmail,
+  requestVerification,
+  confirmEmail,
+  verificationMessage,
+} from "./email-verification.mjs";
 async function body(req) {
   const max =
     req.method === "PATCH" && /^\/api\/events\/[a-f0-9]+(?:\?|$)/.test(req.url)
       ? 3000000
       : 100000;
-  let data = "";
+  const chunks = [];
+  let bytes = 0;
   for await (const chunk of req) {
-    data += chunk;
-    if (data.length > max) fail(413, "Dados muito grandes.");
+    bytes += chunk.length;
+    if (bytes > max) fail(413, "Dados muito grandes.");
+    chunks.push(chunk);
   }
   try {
-    return JSON.parse(data || "{}");
+    return JSON.parse(Buffer.concat(chunks).toString("utf8") || "{}");
   } catch {
     fail(400, "Dados inválidos.");
   }
@@ -46,16 +44,38 @@ export async function api(req, res, url) {
     m = req.method;
   if (m !== "GET" && req.headers.origin !== appOrigin)
     fail(403, "Origem da solicitação inválida.");
+  if (m !== "GET") await limit(req, "all-writes", 180);
+  if (/\/(identify|self-register)$/.test(p) && m === "POST")
+    await limit(req, "guest-entry", 15);
   const b = m === "GET" ? {} : await body(req);
+  if (
+    m === "POST" &&
+    ["/api/login", "/api/forgot-password", "/api/resend-verification"].includes(
+      p,
+    )
+  )
+    await consume(
+      p +
+        ":account:" +
+        String(b?.email || "")
+          .trim()
+          .toLowerCase()
+          .slice(0, 254),
+      10,
+    );
+
   if (!b || typeof b !== "object" || Array.isArray(b))
     fail(400, "Dados inválidos.");
   const eventId = p.match(/^\/api\/events\/([a-f0-9]+)(?:\/|$)/)?.[1];
   if (eventId && m !== "GET") {
     // Serializa alterações do mesmo evento, inclusive confirmação e reserva.
-    return transaction(async () => {
+    const result = await transaction(async () => {
       await get("SELECT id FROM events WHERE id=? FOR UPDATE", eventId);
       return route(req, res, url, b);
     });
+    if (result.verificationEmail)
+      return requestVerification(result.verificationEmail);
+    return result;
   }
   return route(req, res, url, b);
 }
@@ -63,16 +83,24 @@ export async function api(req, res, url) {
 async function route(req, res, url, b) {
   const p = url.pathname,
     m = req.method;
+  if (p === "/api/resend-verification" && m === "POST") {
+    await limit(req, "verify-email", 10);
+    return requestVerification(b.email);
+  }
+  if (p === "/api/confirm-email" && m === "POST") {
+    await limit(req, "confirm-email", 10);
+    return confirmEmail(b.token, b.password, b.passwordConfirm);
+  }
   if (p === "/api/forgot-password" && m === "POST") {
-    limit(req, "forgot-password", 10);
+    await limit(req, "forgot-password", 10);
     return requestReset(b.email);
   }
   if (p === "/api/reset-password" && m === "POST") {
-    limit(req, "reset-password", 10);
+    await limit(req, "reset-password", 10);
     return resetPassword(b.token, b.password);
   }
   if (p === "/api/login" && m === "POST") {
-    limit(req, "login", 12);
+    await limit(req, "login", 12);
     const u = await get(
       "SELECT * FROM users WHERE email=?",
       String(b.email || "")
@@ -83,10 +111,15 @@ async function route(req, res, url, b) {
       !u ||
       typeof b.password !== "string" ||
       b.password.length > 256 ||
-      !verify(b.password, u.password) ||
+      !(await verify(b.password, u.password)) ||
       u.role !== b.role
     )
       fail(401, "E-mail, senha ou perfil incorreto.");
+    if (!u.email_verified)
+      fail(
+        403,
+        "Confirme seu e-mail antes de entrar. Use Reenviar confirmação ou Esqueci minha senha.",
+      );
     await loginCookie(res, u.id);
     return { role: u.role };
   }
@@ -102,7 +135,7 @@ async function route(req, res, url, b) {
     return { ok: true };
   }
   if (p === "/api/register" && m === "POST") {
-    limit(req, "register", 10);
+    await limit(req, "register", 10);
     const nome = txt(b.nome, "Nome"),
       email = txt(b.email, "E-mail").toLowerCase(),
       password = txt(b.password, "Senha", 256);
@@ -113,8 +146,9 @@ async function route(req, res, url, b) {
       );
     if (typeof b.passwordConfirm !== "string" || password !== b.passwordConfirm)
       fail(400, "As senhas precisam ser iguais.");
+    requireEmail();
     if (await get("SELECT id FROM users WHERE email=?", email))
-      fail(409, "Este e-mail já tem conta. Use Entrar.");
+      return requestVerification(email);
     const data = date(b.data, "Data"),
       prazo = date(b.prazo, "Prazo");
     if (prazo > data || data < today())
@@ -127,8 +161,7 @@ async function route(req, res, url, b) {
       await event(uid, titulo, tipo, data, local, prazo);
       return uid;
     });
-    await loginCookie(res, uid);
-    return { ok: true };
+    return requestVerification(email);
   }
   if (p === "/api/me" && m === "GET") return await auth(req);
   if (p === "/api/events" && m === "GET") {
@@ -184,7 +217,6 @@ async function route(req, res, url, b) {
       };
     }
     if (action === "identify" && m === "POST") {
-      limit(req, "identify", 15);
       const g = await guestAuth(eid, b.token);
       if (norm(String(b.nome || "")) !== norm(g.nome))
         fail(400, "Digite o nome completo que aparece no seu convite.");
@@ -200,7 +232,6 @@ async function route(req, res, url, b) {
       };
     }
     if (action === "self-register" && m === "POST") {
-      limit(req, "self-register", 10);
       const e =
         (await get("SELECT * FROM events WHERE id=?", eid)) ||
         fail(404, "Evento não encontrado.");
@@ -423,16 +454,16 @@ async function route(req, res, url, b) {
     }
     if (action === "access" && m === "POST") {
       const email = txt(b.email, "E-mail").toLowerCase();
+      requireEmail();
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))
+        fail(400, "Informe um e-mail válido.");
       let u = await get("SELECT * FROM users WHERE email=?", email);
       if (!u) {
-        const password = txt(b.password, "Senha inicial", 256);
-        if (password.length < 8 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))
-          fail(400, "Use e-mail válido e senha de pelo menos 8 caracteres.");
         u = {
           id: await user(
             txt(b.nome, "Nome"),
             email,
-            password,
+            id() + id(),
             "cerimonialista",
           ),
           role: "cerimonialista",
@@ -445,7 +476,7 @@ async function route(req, res, url, b) {
         eid,
         u.id,
       );
-      return { ok: true };
+      return { ok: true, verificationEmail: email };
     }
   }
   fail(404, "Página ou operação não encontrada.");

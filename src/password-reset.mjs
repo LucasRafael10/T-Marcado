@@ -4,7 +4,10 @@ import { hash } from "./passwords.mjs";
 import { appOrigin } from "./config.mjs";
 import { fail } from "./validation.mjs";
 import { sendEmail, emailDiagnostic } from "./email.mjs";
-import { resetEmailHtml, passwordChangedEmailHtml } from "./email-templates.mjs";
+import {
+  resetEmailHtml,
+  passwordChangedEmailHtml,
+} from "./email-templates.mjs";
 
 const digest = (token) => createHash("sha256").update(token).digest("hex");
 const message =
@@ -100,11 +103,12 @@ export async function resetPassword(token, password) {
     );
     if (!valid) fail(400, "Link inválido ou expirado. Solicite outro.");
     await run(
-      "UPDATE users SET password=? WHERE id=?",
-      hash(password),
+      "UPDATE users SET password=?,email_verified=true WHERE id=?",
+      await hash(password),
       user.id,
     );
     await run("DELETE FROM sessions WHERE user_id=?", user.id);
+    await run("DELETE FROM email_verifications WHERE user_id=?", user.id);
     return user;
   });
   void sendEmail(

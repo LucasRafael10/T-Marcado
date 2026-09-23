@@ -22,6 +22,12 @@ try {
     ),
   );
   console.log("Personalização dos convites configurada.");
+  await executeMigration(
+    readFileSync(
+      new URL("../supabase/migrations/004_security.sql", import.meta.url),
+      "utf8",
+    ),
+  );
 } finally {
   await close();
 }

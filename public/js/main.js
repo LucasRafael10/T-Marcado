@@ -52,7 +52,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
     confirmation.setCustomValidity("");
     action(e.submitter, async () => {
-      await api("/register", "POST", {
+      const result = await api("/register", "POST", {
         nome: $("f-nome").value,
         email: $("f-email").value,
         password: $("f-password").value,
@@ -63,7 +63,10 @@ document.addEventListener("DOMContentLoaded", () => {
         prazo: $("f-prazo").value,
         local: $("f-local").value,
       });
-      location.href = "painel.html";
+      $("eventForm").reset();
+      closeEventForm();
+      alert(result.message);
+      location.href = "reenviar-confirmacao.html";
     });
   };
   $("f-password-confirm").addEventListener("input", () =>

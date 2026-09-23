@@ -166,3 +166,31 @@ function applyEventTheme(color) {
   for (const [name, value] of Object.entries(values))
     document.documentElement.style.setProperty("--" + name, value);
 }
+
+document.addEventListener("click", (event) => {
+  const el = event.target.closest("[data-action]");
+  if (!el) return;
+  switch (el.dataset.action) {
+    case "action0":
+      openEventForm();
+      break;
+    case "action1":
+      toggleEnvelope();
+      break;
+    case "action2":
+      closeEventForm();
+      break;
+    case "action3":
+      closeInviteModal();
+      break;
+    case "action4":
+      sendViaWhatsApp();
+      break;
+    case "action5":
+      hideModal("guestModal");
+      break;
+    case "action6":
+      hideModal("editEventModal");
+      break;
+  }
+});

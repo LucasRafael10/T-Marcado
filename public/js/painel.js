@@ -320,7 +320,7 @@ document.addEventListener("DOMContentLoaded", () =>
         await api(eventPath() + "/access", "POST", {
           nome: $("accessName").value,
           email: $("accessEmail").value,
-          password: $("accessPassword").value,
+
         });
         $("accessForm").reset();
         notice(

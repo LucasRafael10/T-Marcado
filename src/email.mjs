@@ -7,7 +7,8 @@ export function emailDiagnostic(error) {
     422: "Confira os campos do e-mail e o domínio do remetente.",
     429: "Limite de envio atingido. Confira a quota e aguarde antes de tentar novamente.",
   };
-  if (error?.name === "TimeoutError") return "Tempo de resposta da Resend excedido.";
+  if (error?.name === "TimeoutError")
+    return "Tempo de resposta da Resend excedido.";
   if (Number.isInteger(error?.resendStatus))
     return `Resend HTTP ${error.resendStatus}. ${hints[error.resendStatus] || "Confira o serviço e os registros no painel Resend."}`;
   return "Falha no envio. Confira conexão, RESEND_API_KEY, EMAIL_FROM e os registros no painel Resend.";

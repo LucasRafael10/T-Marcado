@@ -1,3 +1,5 @@
+> Revisão histórica. Para o estado atual e instalação, leia ATIVAR-SEGURANCA.md. A validação TLS foi corrigida nesta versão.
+
 # Revisão do código — 22/09/2026
 
 Escopo: leitura do servidor, autenticação, recuperação, configuração e testes existentes. Não é uma auditoria completa nem validação do ambiente publicado.

@@ -17,7 +17,19 @@ if (process.env.NODE_ENV === "test" && process.env.TEST_DATABASE === "pglite") {
   );
   await pool.exec(
     readFileSync(
+      new URL("../supabase/migrations/002_password_reset.sql", import.meta.url),
+      "utf8",
+    ),
+  );
+  await pool.exec(
+    readFileSync(
       new URL("../supabase/migrations/003_invite_options.sql", import.meta.url),
+      "utf8",
+    ),
+  );
+  await pool.exec(
+    readFileSync(
+      new URL("../supabase/migrations/004_security.sql", import.meta.url),
       "utf8",
     ),
   );
@@ -37,8 +49,11 @@ if (process.env.NODE_ENV === "test" && process.env.TEST_DATABASE === "pglite") {
     connectionTimeoutMillis: 10000,
     idleTimeoutMillis: 30000,
     ssl: {
-      // Necessário no Render/Supabase quando a cadeia inclui certificado intermediário autoassinado.
-      rejectUnauthorized: false,
+      // Valida cadeia e identidade do banco. Nunca desabilitar a validação.
+      rejectUnauthorized: true,
+      ...(process.env.DATABASE_CA_CERT
+        ? { ca: process.env.DATABASE_CA_CERT.replace(/\\n/g, "\n") }
+        : {}),
     },
   });
 

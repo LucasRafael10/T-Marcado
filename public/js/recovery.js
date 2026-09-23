@@ -1,3 +1,4 @@
+const mode = document.body.dataset.mode;
 const form = document.getElementById("recoveryForm");
 const message = document.getElementById("message");
 const resetting = Boolean(document.getElementById("password"));
@@ -28,13 +29,17 @@ form.addEventListener("submit", async (event) => {
   message.textContent = "Aguarde…";
   try {
     const response = await fetch(
-      `/api/${resetting ? "reset-password" : "forgot-password"}`,
+      `/api/${mode === "verify" ? "confirm-email" : mode === "resend" ? "resend-verification" : resetting ? "reset-password" : "forgot-password"}`,
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(
           resetting
-            ? { token, password: document.getElementById("password").value }
+            ? {
+                token,
+                password: document.getElementById("password").value,
+                passwordConfirm: document.getElementById("confirm").value,
+              }
             : { email: document.getElementById("email").value },
         ),
       },

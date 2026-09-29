@@ -24,7 +24,9 @@ document.addEventListener("DOMContentLoaded", () => {
           role: selectedRole,
         });
         if (result.pending) {
-          location.href = "aguarde-confirmacao.html";
+          location.href =
+            "aguarde-confirmacao.html?envio=" +
+            encodeURIComponent(result.emailStatus || "unknown");
           return;
         }
         location.href =

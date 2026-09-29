@@ -1,3 +1,7 @@
+# Atualização adicional: correção do e-mail
+
+Este pacote foi revisado para informar falhas e o intervalo de reenvio. Leia primeiro `docs/CORRIGIR-EMAIL.md`, que explica a instalação e a validação atuais. As instruções originais abaixo permanecem como histórico.
+
 # O que mudou no cadastro simplificado
 
 Versão de referência: `fa95b45`, preparada em 29/09/2026. O pacote anterior de código se chama `Ta-Marcado-cadastro-simplificado.zip`. Este pacote contém somente documentos e não instala essas funcionalidades por si só.

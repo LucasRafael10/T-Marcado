@@ -25,6 +25,7 @@ import {
   verificationInfo,
   requireEmail,
   requestVerification,
+  requestPendingVerification,
   confirmEmail,
   verificationMessage,
 } from "./email-verification.mjs";
@@ -94,7 +95,22 @@ async function route(req, res, url, b) {
     const u = await pendingSession(req);
     if (!u)
       fail(401, "Entre com o e-mail e a senha do cadastro para continuar.");
-    return { email: u.email, verified: u.email_verified, role: u.role };
+    const last = await get(
+      "SELECT requested_at FROM email_verifications WHERE user_id=?",
+      u.id,
+    );
+    const retryAfter = last
+      ? Math.max(
+          0,
+          Math.ceil((Number(last.requested_at) + 60000 - Date.now()) / 1000),
+        )
+      : 0;
+    return {
+      email: u.email,
+      verified: u.email_verified,
+      role: u.role,
+      retryAfter,
+    };
   }
   if (p === "/api/verification-info" && m === "POST") {
     await limit(req, "confirm-info", 20);
@@ -104,7 +120,7 @@ async function route(req, res, url, b) {
     await limit(req, "resend-pending", 5);
     const u = await pendingSession(req);
     if (!u) fail(401, "Entre na sua conta para reenviar.");
-    return requestVerification(u.email);
+    return requestPendingVerification(u.email);
   }
   if (p === "/api/resend-verification" && m === "POST") {
     await limit(req, "verify-email", 10);
@@ -145,10 +161,12 @@ async function route(req, res, url, b) {
     )
       fail(401, "E-mail, senha ou perfil incorreto.");
     if (!u.email_verified) {
-      requireEmail();
       await loginCookie(res, u.id);
-      requestVerification(u.email);
-      return { pending: true, role: u.role };
+      return {
+        ...(await requestPendingVerification(u.email)),
+        pending: true,
+        role: u.role,
+      };
     }
     await loginCookie(res, u.id);
     return { role: u.role };
@@ -195,7 +213,7 @@ async function route(req, res, url, b) {
       return uid;
     });
     await loginCookie(res, uid);
-    return { ...requestVerification(email), pending: true };
+    return { ...(await requestPendingVerification(email)), pending: true };
   }
   if (p === "/api/me" && m === "GET") return await auth(req);
   if (p === "/api/events" && m === "GET") {

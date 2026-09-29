@@ -949,6 +949,113 @@ test("Fluxos da API com PostgreSQL embutido", async (t) => {
     },
   );
   await t.test(
+    "cadastro e reenvio informam falha, aceitação e intervalo sem perder a conta",
+    async () => {
+      const originalFetch = globalThis.fetch;
+      const email = "delivery-status@test.com";
+      try {
+        globalThis.fetch = async () => ({ ok: false, status: 403 });
+        const registrationResult = await request(
+          "/api/register",
+          "POST",
+          registration(email),
+        );
+        assert.equal(registrationResult.status, 200);
+        assert.equal(registrationResult.data.pending, true);
+        assert.equal(registrationResult.data.emailStatus, "failed");
+        const cookie = registrationResult.cookie;
+        const user = await db.get("SELECT * FROM users WHERE email=?", email);
+        assert.ok(user);
+        assert.equal(user.email_verified, false);
+        assert.equal(
+          (await request("/api/me", "GET", undefined, cookie)).status,
+          401,
+        );
+        assert.equal(
+          (await request("/api/resend-pending", "POST", {})).status,
+          401,
+        );
+
+        // A resposta autenticada aguarda efetivamente o provedor.
+        let release, started;
+        const called = new Promise((resolve) => {
+          started = resolve;
+        });
+        globalThis.fetch = () =>
+          new Promise((resolve) => {
+            release = resolve;
+            started();
+          });
+        let finished = false;
+        const sending = request("/api/resend-pending", "POST", {}, cookie).then(
+          (r) => {
+            finished = true;
+            return r;
+          },
+        );
+        await called;
+        await new Promise((resolve) => setTimeout(resolve, 20));
+        assert.equal(finished, false);
+        release({ ok: true });
+        const accepted = await sending;
+        assert.equal(accepted.data.emailStatus, "sent");
+        assert.equal(accepted.data.retryAfter, 60);
+        const cooldown = await request(
+          "/api/resend-pending",
+          "POST",
+          {},
+          cookie,
+        );
+        assert.equal(cooldown.data.emailStatus, "cooldown");
+        assert.ok(cooldown.data.retryAfter > 0);
+        const status = await request(
+          "/api/verification-status",
+          "GET",
+          undefined,
+          cookie,
+        );
+        assert.ok(status.data.retryAfter > 0);
+
+        await db.run(
+          "UPDATE email_verifications SET requested_at=0 WHERE user_id=?",
+          user.id,
+        );
+        const old = await db.get(
+          "SELECT * FROM email_verifications WHERE user_id=?",
+          user.id,
+        );
+        globalThis.fetch = async () => ({ ok: false, status: 429 });
+        const rejected = await request(
+          "/api/resend-pending",
+          "POST",
+          {},
+          cookie,
+        );
+        assert.equal(rejected.data.emailStatus, "failed");
+        assert.deepEqual(
+          await db.get(
+            "SELECT * FROM email_verifications WHERE user_id=?",
+            user.id,
+          ),
+          old,
+        );
+        assert.equal(
+          (await db.get("SELECT password FROM users WHERE id=?", user.id))
+            .password,
+          user.password,
+        );
+        delete process.env.RESEND_API_KEY;
+        const login = await signIn(email);
+        assert.equal(login.data.pending, true);
+        assert.equal(login.data.emailStatus, "failed");
+        assert.ok(login.cookie);
+      } finally {
+        process.env.RESEND_API_KEY = "test-only";
+        globalThis.fetch = originalFetch;
+      }
+    },
+  );
+  await t.test(
     "limite compartilhado atômico e persistente entre módulos",
     async () => {
       const { consume } = await import("../src/rate-limit.mjs");

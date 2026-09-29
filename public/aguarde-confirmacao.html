@@ -1,32 +1,53 @@
 <!doctype html>
 <html lang="pt-BR">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="referrer" content="no-referrer">
-  <title>Confirmar e-mail — Tá Marcado</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Libre+Franklin:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="css/tokens.css">
-  <link rel="stylesheet" href="css/base.css">
-  <link rel="stylesheet" href="css/login.css">
-  <link rel="stylesheet" href="css/refinements.css">
-  <link rel="stylesheet" href="css/recovery.css">
-  <link rel="icon" href="favicon.svg" type="image/svg+xml">
-</head>
-<body data-mode="verify" class="login-body recovery-body">
-  <main class="login-shell recovery-shell">
-    <a class="login-logo recovery-logo" href="index.html"><span class="dot"></span>Tá Marcado</a>
-    <section class="login-card recovery-card">
-      <h1 class="login-title">Confira seu e-mail</h1>
-      <p class="login-sub">Enviando o link para <strong id="pending-email">seu e-mail</strong>. Abra a mensagem e confirme seu endereço no mesmo navegador. Você não precisa definir a senha novamente.</p>
-      <p id="message" class="recovery-message" role="status" aria-live="polite">Aguardando confirmação… Você pode deixar esta página aberta.</p>
-      <p class="recovery-hint">Confira também a pasta de spam. Se não chegar, use o botão abaixo após um minuto.</p>
-      <button id="resend" class="big-btn primary" disabled>Reenviar link</button>
-      <p><a href="login.html">Voltar para entrar</a></p>
-    </section>
-  </main>
-  <script src="js/wait-verification.js"></script>
-</body>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="referrer" content="no-referrer" />
+    <title>Confirmar e-mail — Tá Marcado</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Libre+Franklin:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="css/tokens.css" />
+    <link rel="stylesheet" href="css/base.css" />
+    <link rel="stylesheet" href="css/login.css" />
+    <link rel="stylesheet" href="css/refinements.css" />
+    <link rel="stylesheet" href="css/recovery.css" />
+    <link rel="icon" href="favicon.svg" type="image/svg+xml" />
+  </head>
+  <body data-mode="verify" class="login-body recovery-body">
+    <main class="login-shell recovery-shell">
+      <a class="login-logo recovery-logo" href="index.html"
+        ><span class="dot"></span>Tá Marcado</a
+      >
+      <section class="login-card recovery-card">
+        <h1 class="login-title">Confira seu e-mail</h1>
+        <p class="login-sub">
+          Confirme o endereço <strong id="pending-email">seu e-mail</strong>.
+          Abra a mensagem e confirme seu endereço no mesmo navegador. Você não
+          precisa definir a senha novamente.
+        </p>
+        <p
+          id="message"
+          class="recovery-message"
+          role="status"
+          aria-live="polite"
+        >
+          Aguardando confirmação… Você pode deixar esta página aberta.
+        </p>
+        <p class="recovery-hint">
+          Confira também a pasta de spam. Se não chegar, use o botão abaixo
+          quando estiver disponível.
+        </p>
+        <button id="resend" class="big-btn primary" disabled>
+          Reenviar link
+        </button>
+        <p><a href="login.html">Voltar para entrar</a></p>
+      </section>
+    </main>
+    <script src="js/wait-verification.js"></script>
+  </body>
 </html>

@@ -112,3 +112,74 @@ test("link em outro navegador não ativa conta nem pede uma nova senha", async (
   assert.equal(els.plannerForm.hidden, true);
   assert.match(els.message.textContent, /mesmo navegador/);
 });
+
+test("reenvio mostra falha real, bloqueia cliques duplicados e respeita o prazo do servidor", async () => {
+  const els = {
+    message: element(),
+    resend: element(),
+    "pending-email": element(),
+  };
+  let tick,
+    release,
+    attempts = 0;
+  vm.runInNewContext(script("wait-verification.js"), {
+    document: { getElementById: (k) => els[k] },
+    location: { search: "?envio=failed", replace() {} },
+    URLSearchParams,
+    Date,
+    setInterval: (f) => {
+      tick = f;
+      return 1;
+    },
+    clearInterval() {},
+    setTimeout() {},
+    fetch: async (url) => {
+      if (url.includes("verification-status"))
+        return {
+          ok: true,
+          json: async () => ({
+            email: "test@example.com",
+            verified: false,
+            retryAfter: 0,
+          }),
+        };
+      attempts++;
+      return new Promise((resolve) => {
+        release = resolve;
+      });
+    },
+  });
+  assert.match(els.message.textContent, /não foi possível confirmar/);
+  await new Promise((resolve) => setImmediate(resolve));
+  assert.equal(els.resend.disabled, false);
+  const pending = els.resend.listeners.click();
+  tick();
+  assert.equal(els.resend.disabled, true);
+  assert.equal(els.resend.textContent, "Enviando…");
+  await els.resend.listeners.click();
+  assert.equal(attempts, 1);
+  release({
+    ok: true,
+    json: async () => ({
+      emailStatus: "failed",
+      retryAfter: 0,
+      message: "Falha ao enviar. Tente novamente.",
+    }),
+  });
+  await pending;
+  assert.match(els.message.textContent, /Falha ao enviar/);
+  assert.equal(els.resend.disabled, false);
+  const retry = els.resend.listeners.click();
+  release({
+    ok: true,
+    json: async () => ({
+      emailStatus: "cooldown",
+      retryAfter: 37,
+      message: "Aguarde 37 segundos.",
+    }),
+  });
+  await retry;
+  assert.match(els.message.textContent, /37 segundos/);
+  assert.equal(els.resend.disabled, true);
+  assert.match(els.resend.textContent, /Reenviar em 3[67]s/);
+});

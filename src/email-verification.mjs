@@ -16,17 +16,25 @@ export function requireEmail() {
 export async function sendVerification(email) {
   const token = randomBytes(32).toString("hex"),
     tokenHash = digest(token);
+  let previous;
   const recipient = await transaction(async () => {
     const u = await get(
       "SELECT id,email,email_verified,role FROM users WHERE email=? FOR UPDATE",
       email,
     );
-    if (!u || u.email_verified) return null;
+    if (!u || u.email_verified) return { status: "skipped" };
     const old = await get(
-      "SELECT requested_at FROM email_verifications WHERE user_id=?",
+      "SELECT token_hash,expires,requested_at FROM email_verifications WHERE user_id=?",
       u.id,
     );
-    if (old && Number(old.requested_at) > Date.now() - 60000) return null;
+    if (old && Number(old.requested_at) > Date.now() - 60000)
+      return {
+        status: "cooldown",
+        retryAfter: Math.ceil(
+          (Number(old.requested_at) + 60000 - Date.now()) / 1000,
+        ),
+      };
+    previous = old;
     await run(
       `INSERT INTO email_verifications(user_id,token_hash,expires,requested_at) VALUES(?,?,?,?)
       ON CONFLICT(user_id) DO UPDATE SET token_hash=EXCLUDED.token_hash,expires=EXCLUDED.expires,requested_at=EXCLUDED.requested_at`,
@@ -37,7 +45,7 @@ export async function sendVerification(email) {
     );
     return u;
   });
-  if (!recipient) return;
+  if (recipient.status) return recipient;
   try {
     const url = `${appOrigin}/confirmar-email.html#token=${token}`;
     await sendEmail(
@@ -46,9 +54,29 @@ export async function sendVerification(email) {
       `Confirme seu e-mail${recipient.role === "cerimonialista" ? " e defina sua senha pessoal" : " no mesmo navegador usado no cadastro; sua senha já foi definida"}. Link válido por 30 minutos e uso único:\n${url}\nSe você não reconhece o cadastro ou convite, ignore esta mensagem.`,
       verificationEmailHtml(url, recipient.role === "cerimonialista"),
     );
+    console.info(
+      "[email-verification] Envio aceito pela Resend; entrega deve ser conferida no painel.",
+    );
+    return { status: "sent", retryAfter: 60 };
   } catch (error) {
-    await run("DELETE FROM email_verifications WHERE token_hash=?", tokenHash);
-    console.error(emailDiagnostic(error));
+    console.error("[email-verification] " + emailDiagnostic(error));
+    // Se o provedor rejeitar o reenvio, preserve o link anterior. A condição
+    // impede sobrescrever um token mais novo ou recriar um token já consumido.
+    if (previous)
+      await run(
+        "UPDATE email_verifications SET token_hash=?,expires=?,requested_at=? WHERE user_id=? AND token_hash=?",
+        previous.token_hash,
+        previous.expires,
+        previous.requested_at,
+        recipient.id,
+        tokenHash,
+      );
+    else
+      await run(
+        "DELETE FROM email_verifications WHERE token_hash=?",
+        tokenHash,
+      );
+    return { status: "failed", retryAfter: 0 };
   }
 }
 export function requestVerification(email) {
@@ -63,6 +91,33 @@ export function requestVerification(email) {
     console.error("Falha ao processar confirmação de e-mail."),
   );
   return { message: verificationMessage };
+}
+
+// Somente fluxos que já autenticaram a pessoa podem revelar o resultado.
+// O endpoint público mantém resposta genérica para não expor contas existentes.
+export async function requestPendingVerification(email) {
+  let result;
+  try {
+    requireEmail();
+    result = await sendVerification(email);
+  } catch {
+    console.error(
+      "[email-verification] Falha ao preparar envio; confira banco e configuração de e-mail.",
+    );
+    result = { status: "failed", retryAfter: 0 };
+  }
+  const messages = {
+    sent: "O serviço de e-mail aceitou o envio. Confira a caixa de entrada e o spam.",
+    cooldown: `Aguarde ${result.retryAfter || 1} segundos para solicitar outro link.`,
+    skipped: "Sua conta já está confirmada. Atualize a página para continuar.",
+    failed:
+      "Sua conta está salva, mas não foi possível confirmar o envio do e-mail. Tente reenviar; se persistir, contate o suporte.",
+  };
+  return {
+    emailStatus: result.status,
+    retryAfter: result.retryAfter || 0,
+    message: messages[result.status],
+  };
 }
 
 async function candidateFor(token) {

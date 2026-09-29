@@ -65,7 +65,9 @@ document.addEventListener("DOMContentLoaded", () => {
       });
       $("eventForm").reset();
       closeEventForm();
-      location.href = "aguarde-confirmacao.html";
+      location.href =
+        "aguarde-confirmacao.html?envio=" +
+        encodeURIComponent(result.emailStatus || "unknown");
     });
   };
 });

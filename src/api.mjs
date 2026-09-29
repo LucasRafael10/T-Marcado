@@ -2,7 +2,13 @@ import { get, all, run, transaction } from "./database.mjs";
 import { appOrigin, secureCookie } from "./config.mjs";
 import { id, verify } from "./passwords.mjs";
 import { user, event, guest } from "./repository.mjs";
-import { auth, allowed, guestAuth, loginCookie } from "./auth.mjs";
+import {
+  auth,
+  allowed,
+  guestAuth,
+  loginCookie,
+  pendingSession,
+} from "./auth.mjs";
 import { requestReset, resetPassword } from "./password-reset.mjs";
 import {
   fail,
@@ -16,6 +22,7 @@ import {
 } from "./validation.mjs";
 import { limit, consume } from "./rate-limit.mjs";
 import {
+  verificationInfo,
   requireEmail,
   requestVerification,
   confirmEmail,
@@ -83,13 +90,35 @@ export async function api(req, res, url) {
 async function route(req, res, url, b) {
   const p = url.pathname,
     m = req.method;
+  if (p === "/api/verification-status" && m === "GET") {
+    const u = await pendingSession(req);
+    if (!u)
+      fail(401, "Entre com o e-mail e a senha do cadastro para continuar.");
+    return { email: u.email, verified: u.email_verified, role: u.role };
+  }
+  if (p === "/api/verification-info" && m === "POST") {
+    await limit(req, "confirm-info", 20);
+    return verificationInfo(b.token, await pendingSession(req));
+  }
+  if (p === "/api/resend-pending" && m === "POST") {
+    await limit(req, "resend-pending", 5);
+    const u = await pendingSession(req);
+    if (!u) fail(401, "Entre na sua conta para reenviar.");
+    return requestVerification(u.email);
+  }
   if (p === "/api/resend-verification" && m === "POST") {
     await limit(req, "verify-email", 10);
     return requestVerification(b.email);
   }
   if (p === "/api/confirm-email" && m === "POST") {
     await limit(req, "confirm-email", 10);
-    return confirmEmail(b.token, b.password, b.passwordConfirm);
+    return confirmEmail(
+      b.token,
+      b.password,
+      b.passwordConfirm,
+      await pendingSession(req),
+      res,
+    );
   }
   if (p === "/api/forgot-password" && m === "POST") {
     await limit(req, "forgot-password", 10);
@@ -115,11 +144,12 @@ async function route(req, res, url, b) {
       u.role !== b.role
     )
       fail(401, "E-mail, senha ou perfil incorreto.");
-    if (!u.email_verified)
-      fail(
-        403,
-        "Confirme seu e-mail antes de entrar. Use Reenviar confirmação ou Esqueci minha senha.",
-      );
+    if (!u.email_verified) {
+      requireEmail();
+      await loginCookie(res, u.id);
+      requestVerification(u.email);
+      return { pending: true, role: u.role };
+    }
     await loginCookie(res, u.id);
     return { role: u.role };
   }
@@ -148,7 +178,10 @@ async function route(req, res, url, b) {
       fail(400, "As senhas precisam ser iguais.");
     requireEmail();
     if (await get("SELECT id FROM users WHERE email=?", email))
-      return requestVerification(email);
+      fail(
+        409,
+        "Este e-mail já tem cadastro. Entre com sua senha ou use Esqueci minha senha.",
+      );
     const data = date(b.data, "Data"),
       prazo = date(b.prazo, "Prazo");
     if (prazo > data || data < today())
@@ -161,7 +194,8 @@ async function route(req, res, url, b) {
       await event(uid, titulo, tipo, data, local, prazo);
       return uid;
     });
-    return requestVerification(email);
+    await loginCookie(res, uid);
+    return { ...requestVerification(email), pending: true };
   }
   if (p === "/api/me" && m === "GET") return await auth(req);
   if (p === "/api/events" && m === "GET") {

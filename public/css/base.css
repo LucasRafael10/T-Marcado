@@ -194,3 +194,15 @@ footer .wrap {
   height: 30px;
   flex: none;
 }
+.password-feedback{font-size:.8rem;line-height:1.5;margin:8px 0 14px;color:var(--green-deep)}
+.password-feedback p{margin:6px 0}
+#password-strength{display:block;width:100%;height:12px;border:0;border-radius:8px;background:#e5e3dc}
+#password-strength::-webkit-meter-bar{background:#e5e3dc;border:0;border-radius:8px}
+#password-strength::-webkit-meter-optimum-value{background:#a23b32;border-radius:8px;transition:width .2s}
+#password-strength[data-score="2"]::-webkit-meter-optimum-value{background:#a97917}
+#password-strength[data-score="3"]::-webkit-meter-optimum-value{background:#2f6846}
+#password-strength::-moz-meter-bar{background:#a23b32}
+#password-strength[data-score="2"]::-moz-meter-bar{background:#a97917}
+#password-strength[data-score="3"]::-moz-meter-bar{background:#2f6846}
+#password-match[data-state="mismatch"]{color:#a23b32}
+#password-match[data-state="match"]{color:#2f6846}

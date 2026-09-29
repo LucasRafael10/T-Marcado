@@ -65,14 +65,7 @@ document.addEventListener("DOMContentLoaded", () => {
       });
       $("eventForm").reset();
       closeEventForm();
-      alert(result.message);
-      location.href = "reenviar-confirmacao.html";
+      location.href = "aguarde-confirmacao.html";
     });
   };
-  $("f-password-confirm").addEventListener("input", () =>
-    $("f-password-confirm").setCustomValidity(""),
-  );
-  $("f-password").addEventListener("input", () =>
-    $("f-password-confirm").setCustomValidity(""),
-  );
 });

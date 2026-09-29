@@ -62,3 +62,16 @@ export async function loginCookie(res, uid) {
     `tm_session=${token}; HttpOnly; SameSite=Strict; Path=/; Max-Age=86400${secureCookie}`,
   );
 }
+
+export async function pendingSession(req) {
+  const token = (req.headers.cookie || "").match(
+    /(?:^|;\s*)tm_session=([a-f0-9]+)/,
+  )?.[1];
+  if (!token) return null;
+  const u = await get(
+    "SELECT u.id,u.email,u.role,u.email_verified FROM sessions s JOIN users u ON u.id=s.user_id WHERE s.token=? AND s.expires>?",
+    token,
+    Date.now(),
+  );
+  return u ? { ...u, token } : null;
+}

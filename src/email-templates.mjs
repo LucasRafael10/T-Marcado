@@ -61,10 +61,10 @@ export function passwordChangedEmailHtml() {
   );
 }
 
-export function verificationEmailHtml(url) {
+export function verificationEmailHtml(url, needsPassword = false) {
   const safe = escapeHtml(url);
   return layout(
     "Confirme seu e-mail",
-    `<h1 style="color:#1c2e23;font-family:Georgia,serif;">Seu acesso ao Tá Marcado</h1><p>Confirme este e-mail e defina sua senha pessoal para organizar ou acompanhar eventos.</p><p><a href="${safe}" style="display:inline-block;padding:16px 24px;background:#2f4a3a;color:white;text-decoration:none;border-radius:8px;">Confirmar e definir senha</a></p><p>Link válido por 30 minutos, de uso único.</p><p>Se o botão não abrir, copie este endereço:</p><p style="word-break:break-all;">${safe}</p><p>Não reconhece o cadastro ou convite? Ignore este e-mail.</p>`,
+    `<h1 style="color:#1c2e23;font-family:Georgia,serif;">Seu acesso ao Tá Marcado</h1><p>${needsPassword ? "Confirme este e-mail e defina sua senha pessoal para acompanhar eventos." : "Sua senha já foi definida no cadastro. Confirme seu e-mail no mesmo navegador para abrir seu painel."}</p><p><a href="${safe}" style="display:inline-block;padding:16px 24px;background:#2f4a3a;color:white;text-decoration:none;border-radius:8px;">${needsPassword ? "Confirmar e definir senha" : "Confirmar meu e-mail"}</a></p><p>Link válido por 30 minutos, de uso único.</p><p>Se o botão não abrir, copie este endereço:</p><p style="word-break:break-all;">${safe}</p><p>Não reconhece o cadastro ou convite? Ignore este e-mail.</p>`,
   );
 }

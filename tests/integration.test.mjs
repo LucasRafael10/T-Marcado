@@ -21,6 +21,7 @@ const db = await import("../src/database.mjs");
 if (!server.listening) await once(server, "listening");
 const base = `http://127.0.0.1:${server.address().port}`;
 const origin = process.env.APP_ORIGIN;
+const browserCookies = new Map();
 async function request(url, method = "GET", data, cookie = "", extra = {}) {
   return new Promise((resolve, reject) => {
     const req = http.request(
@@ -49,6 +50,11 @@ async function request(url, method = "GET", data, cookie = "", extra = {}) {
           const headers = new Headers();
           for (const [key, v] of Object.entries(res.headers))
             headers.set(key, Array.isArray(v) ? v.join(",") : v);
+          if (data?.email && headers.get("set-cookie"))
+            browserCookies.set(
+              data.email,
+              headers.get("set-cookie").split(";")[0],
+            );
           resolve({
             status: res.statusCode,
             data: value,
@@ -85,11 +91,52 @@ async function activation(email) {
   }
   assert.ok(mail, "E-mail de confirmação enviado");
   const token = mail.text.match(/token=([a-f0-9]{64})/)[1];
-  const result = await request("/api/confirm-email", "POST", {
-    token,
-    password: "SenhaTeste123!",
-    passwordConfirm: "SenhaTeste123!",
-  });
+  const cookie = browserCookies.get(email) || "";
+  const info = await request(
+    "/api/verification-info",
+    "POST",
+    { token },
+    cookie,
+  );
+  assert.equal(info.status, 200);
+  const before = await db.get(
+    "SELECT password FROM users WHERE email=?",
+    email,
+  );
+  if (!info.data.needsPassword) {
+    assert.equal(
+      (await request("/api/me", "GET", undefined, cookie)).status,
+      401,
+    );
+    assert.equal(
+      (await request("/api/confirm-email", "POST", { token })).status,
+      403,
+    );
+  }
+  const result = await request(
+    "/api/confirm-email",
+    "POST",
+    info.data.needsPassword
+      ? { token, password: "SenhaTeste123!", passwordConfirm: "SenhaTeste123!" }
+      : { token },
+    cookie,
+  );
+  if (!info.data.needsPassword) {
+    assert.equal(
+      (await db.get("SELECT password FROM users WHERE email=?", email))
+        .password,
+      before.password,
+    );
+    assert.equal(
+      (await request("/api/me", "GET", undefined, cookie)).status,
+      200,
+    );
+    assert.equal(
+      (await request("/api/verification-status", "GET", undefined, cookie)).data
+        .verified,
+      true,
+    );
+  }
   assert.equal(result.status, 200, JSON.stringify(result.data));
   assert.equal(
     (
@@ -218,8 +265,12 @@ test("Fluxos da API com PostgreSQL embutido", async (t) => {
       registration("owner@test.com"),
     );
     assert.equal(result.status, 200, JSON.stringify(result.data));
-    assert.equal(result.cookie, undefined);
-    assert.equal((await signIn("owner@test.com")).status, 403);
+    assert.ok(result.cookie);
+    assert.equal(
+      (await request("/api/me", "GET", undefined, result.cookie)).status,
+      401,
+    );
+    assert.equal((await signIn("owner@test.com")).data.pending, true);
     await activation("owner@test.com");
     const login = await signIn("owner@test.com");
     owner = login.cookie;
@@ -228,7 +279,7 @@ test("Fluxos da API com PostgreSQL embutido", async (t) => {
     assert.equal(
       (await request("/api/register", "POST", registration("owner@test.com")))
         .status,
-      200,
+      409,
     );
     await await request(
       "/api/register",
@@ -834,7 +885,7 @@ test("Fluxos da API com PostgreSQL embutido", async (t) => {
         "Teste",
         "expire@test.com",
         "SenhaInicial123!",
-        "noiva",
+        "cerimonialista",
       );
       await sendVerification("expire@test.com");
       const token1 = sent.at(-1).text.match(/token=([a-f0-9]{64})/)[1];

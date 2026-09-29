@@ -19,17 +19,14 @@
   <main class="login-shell recovery-shell">
     <a class="login-logo recovery-logo" href="index.html"><span class="dot"></span>Tá Marcado</a>
     <section class="login-card recovery-card">
-      <h1 class="login-title">Confirmando seu e-mail</h1>
-      <p id="message" class="recovery-message" role="status" aria-live="polite">Aguarde…</p>
-      <form id="plannerForm" hidden>
-        <p>Você recebeu um convite de cerimonialista. Escolha sua senha pessoal.</p>
-        <label class="field-label" for="password">Senha</label><input class="field-input" id="password" type="password" minlength="8" maxlength="256" autocomplete="new-password" required>
-        <label class="field-label" for="confirm">Confirme a senha</label><input class="field-input" id="confirm" type="password" minlength="8" maxlength="256" autocomplete="new-password" required>
-        <button class="big-btn primary">Ativar meu acesso</button>
-      </form>
-      <p><a href="login.html">Entrar na minha conta</a> · <a href="reenviar-confirmacao.html">Solicitar outro link</a></p>
+      <h1 class="login-title">Confira seu e-mail</h1>
+      <p class="login-sub">Enviando o link para <strong id="pending-email">seu e-mail</strong>. Abra a mensagem e confirme seu endereço no mesmo navegador. Você não precisa definir a senha novamente.</p>
+      <p id="message" class="recovery-message" role="status" aria-live="polite">Aguardando confirmação… Você pode deixar esta página aberta.</p>
+      <p class="recovery-hint">Confira também a pasta de spam. Se não chegar, use o botão abaixo após um minuto.</p>
+      <button id="resend" class="big-btn primary" disabled>Reenviar link</button>
+      <p><a href="login.html">Voltar para entrar</a></p>
     </section>
   </main>
-  <script src="js/confirm-verification.js"></script>
+  <script src="js/wait-verification.js"></script>
 </body>
 </html>

@@ -23,6 +23,10 @@ document.addEventListener("DOMContentLoaded", () => {
           password: $("senhaInput").value,
           role: selectedRole,
         });
+        if (result.pending) {
+          location.href = "aguarde-confirmacao.html";
+          return;
+        }
         location.href =
           result.role === "noiva" ? "painel.html" : "cerimonialista.html";
       } catch (err) {

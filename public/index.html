@@ -205,9 +205,11 @@
         <input class="field-input" type="email" id="f-email" name="email" required placeholder="voce@email.com">
 
         <label class="field-label" for="f-password">Crie uma senha</label>
-        <input class="field-input" id="f-password" name="password" type="password" minlength="8" maxlength="256" autocomplete="new-password" required>
+        <input class="field-input" id="f-password" aria-describedby="password-strength-text" name="password" type="password" minlength="8" maxlength="256" autocomplete="new-password" required>
+        <div class="password-feedback"><meter id="password-strength" min="0" max="3" value="0" aria-label="Força estimada da senha"></meter><p id="password-strength-text" aria-live="polite">Digite uma senha com pelo menos 8 caracteres.</p></div>
         <label class="field-label" for="f-password-confirm">Confirme sua senha</label>
-        <input class="field-input" id="f-password-confirm" name="passwordConfirm" type="password" minlength="8" maxlength="256" autocomplete="new-password" required>
+        <input class="field-input" id="f-password-confirm" aria-describedby="password-match" name="passwordConfirm" type="password" minlength="8" maxlength="256" autocomplete="new-password" required>
+<p id="password-match" class="password-feedback" aria-live="polite">Repita a senha para confirmar.</p>
         <label class="field-label" for="f-titulo">Nome do evento</label><input class="field-input" id="f-titulo" type="text" placeholder="Ana & Marcos" required><label class="field-label" for="f-tipo">Tipo de evento</label>
         <select class="field-input" id="f-tipo" name="tipo_evento" required>
           <option value="" disabled selected>Escolha uma opção</option>
@@ -236,6 +238,7 @@
 </footer>
 
 <script src="js/app.js"></script>
+<script src="js/password-feedback.js"></script>
 <script src="js/main.js"></script>
 </body>
 </html>

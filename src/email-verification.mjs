@@ -1,5 +1,6 @@
 import { createHash, randomBytes } from "node:crypto";
 import { get, run, transaction } from "./database.mjs";
+import { loginCookie } from "./auth.mjs";
 import { hash } from "./passwords.mjs";
 import { fail } from "./validation.mjs";
 import { appOrigin } from "./config.mjs";
@@ -17,7 +18,7 @@ export async function sendVerification(email) {
     tokenHash = digest(token);
   const recipient = await transaction(async () => {
     const u = await get(
-      "SELECT id,email,email_verified FROM users WHERE email=? FOR UPDATE",
+      "SELECT id,email,email_verified,role FROM users WHERE email=? FOR UPDATE",
       email,
     );
     if (!u || u.email_verified) return null;
@@ -42,8 +43,8 @@ export async function sendVerification(email) {
     await sendEmail(
       email,
       "Confirme seu e-mail — Tá Marcado",
-      `Confirme seu e-mail e defina sua senha pessoal. Link válido por 30 minutos e uso único:\n${url}\nSe você não reconhece o cadastro ou convite, ignore esta mensagem.`,
-      verificationEmailHtml(url),
+      `Confirme seu e-mail${recipient.role === "cerimonialista" ? " e defina sua senha pessoal" : " no mesmo navegador usado no cadastro; sua senha já foi definida"}. Link válido por 30 minutos e uso único:\n${url}\nSe você não reconhece o cadastro ou convite, ignore esta mensagem.`,
+      verificationEmailHtml(url, recipient.role === "cerimonialista"),
     );
   } catch (error) {
     await run("DELETE FROM email_verifications WHERE token_hash=?", tokenHash);
@@ -63,47 +64,87 @@ export function requestVerification(email) {
   );
   return { message: verificationMessage };
 }
-export async function confirmEmail(token, password, confirmation) {
+
+async function candidateFor(token) {
   if (typeof token !== "string" || !/^[a-f0-9]{64}$/.test(token))
     fail(400, "Link inválido ou expirado. Solicite outro.");
-  if (
-    typeof password !== "string" ||
-    password.length < 8 ||
-    password.length > 256 ||
-    password !== password.trim() ||
-    password !== confirmation
-  )
-    fail(
-      400,
-      "Use de 8 a 256 caracteres e confirme a mesma senha, sem espaços no início ou fim.",
-    );
-  const tokenHash = digest(token);
-  const candidate = await get(
-    "SELECT user_id FROM email_verifications WHERE token_hash=? AND expires>?",
-    tokenHash,
+  const c = await get(
+    "SELECT v.user_id,u.role FROM email_verifications v JOIN users u ON u.id=v.user_id WHERE v.token_hash=? AND v.expires>?",
+    digest(token),
     Date.now(),
   );
-  if (!candidate) fail(400, "Link inválido ou expirado. Solicite outro.");
-  const passwordHash = await hash(password);
+  if (!c) fail(400, "Link inválido ou expirado. Solicite outro.");
+  return c;
+}
+export async function verificationInfo(token, browser) {
+  const c = await candidateFor(token);
+  return {
+    needsPassword: c.role === "cerimonialista",
+    sameBrowser: browser?.id === c.user_id,
+  };
+}
+export async function confirmEmail(
+  token,
+  password,
+  confirmation,
+  browser,
+  res,
+) {
+  const c = await candidateFor(token),
+    planner = c.role === "cerimonialista";
+  if (!planner && browser?.id !== c.user_id)
+    fail(
+      403,
+      "Abra este link no navegador em que fez o cadastro. Se perdeu o acesso, entre com sua senha ou use Esqueci minha senha.",
+    );
+  let passwordHash;
+  if (planner) {
+    if (
+      typeof password !== "string" ||
+      password.length < 8 ||
+      password.length > 256 ||
+      password !== password.trim() ||
+      password !== confirmation
+    )
+      fail(400, "Use de 8 a 256 caracteres e confirme a mesma senha.");
+    passwordHash = await hash(password);
+  }
   await transaction(async () => {
-    await get("SELECT id FROM users WHERE id=? FOR UPDATE", candidate.user_id);
+    await get("SELECT id FROM users WHERE id=? FOR UPDATE", c.user_id);
+    if (
+      !planner &&
+      !(await get(
+        "SELECT token FROM sessions WHERE user_id=? AND token=? AND expires>?",
+        c.user_id,
+        browser.token,
+        Date.now(),
+      ))
+    )
+      fail(403, "Sessão expirada. Entre novamente.");
     const valid = await get(
       "DELETE FROM email_verifications WHERE user_id=? AND token_hash=? AND expires>? RETURNING user_id",
-      candidate.user_id,
-      tokenHash,
+      c.user_id,
+      digest(token),
       Date.now(),
     );
     if (!valid) fail(400, "Link inválido ou expirado. Solicite outro.");
-    // The mailbox owner chooses a new secret; a pre-registered password cannot survive activation.
-    await run(
-      "UPDATE users SET email_verified=true,password=? WHERE id=?",
-      passwordHash,
-      candidate.user_id,
-    );
-    await run("DELETE FROM sessions WHERE user_id=?", candidate.user_id);
-    await run("DELETE FROM password_resets WHERE user_id=?", candidate.user_id);
+    if (planner)
+      await run(
+        "UPDATE users SET email_verified=true,password=? WHERE id=?",
+        passwordHash,
+        c.user_id,
+      );
+    else
+      await run("UPDATE users SET email_verified=true WHERE id=?", c.user_id);
+    await run("DELETE FROM password_resets WHERE user_id=?", c.user_id);
+    if (planner) await run("DELETE FROM sessions WHERE user_id=?", c.user_id);
+    else
+      await run(
+        "DELETE FROM sessions WHERE user_id=? AND token<>?",
+        c.user_id,
+        browser.token,
+      );
   });
-  return {
-    message: "E-mail confirmado e senha definida. Entre com sua senha pessoal.",
-  };
+  if (planner && res) await loginCookie(res, c.user_id);
+  return { message: "E-mail confirmado! Abrindo seu painel…", role: c.role };
 }

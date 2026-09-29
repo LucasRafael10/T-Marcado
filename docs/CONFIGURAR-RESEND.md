@@ -1,58 +1,44 @@
-# Configurar recuperação de senha com Resend
+# E-mails: confirmação, convite e recuperação
 
-Este projeto usa autenticação própria em Node e tabelas PostgreSQL. O envio passa por src/email.mjs usando a API HTTPS da Resend; não precisa configurar SMTP no Supabase Auth. Já existem recuperação de senha e aviso após alteração. Verificação do e-mail no cadastro não está implementada.
+O servidor chama a API da Resend por HTTPS. Não é necessário configurar SMTP do Supabase Auth: este projeto usa autenticação própria.
 
-## 1. Domínio e chave
+## O que cada arquivo faz
 
-1. Abra https://resend.com/domains e adicione um domínio que você controla. O endereço gratuito do Render não é um domínio seu para cadastrar no DNS da Resend.
-2. No provedor DNS desse domínio, adicione exatamente os registros de envio indicados pela Resend, incluindo SPF e DKIM. Não remova registros de e-mail existentes e não ative recebimento para apenas enviar recuperação.
-3. Aguarde o domínio aparecer como Verified. Use no EMAIL_FROM um endereço desse domínio ou subdomínio verificado.
-4. Em https://resend.com/api-keys crie uma chave com permissão Sending access, restrita ao domínio quando possível. Guarde-a apenas no ambiente do servidor.
-5. Mantenha rastreamento de cliques e aberturas desativado para recuperação de senha.
-
-## 2. Ambiente do servidor
-
-No serviço web do Render, em Environment, cadastre:
-
-| Variável | Valor |
+| Arquivo | Função |
 | --- | --- |
-| RESEND_API_KEY | Sua chave real, cadastrada diretamente no Render |
-| EMAIL_FROM | Gêmeas Cerimonial <nao-responda@seu-dominio.com.br> |
-| APP_ORIGIN | URL exata que você abre no navegador, com https e sem barra final |
-| DATABASE_URL | Conexão PostgreSQL existente |
-| NODE_ENV | production |
+| `src/email.mjs` | Faz o envio e produz diagnósticos sem expor chave/token |
+| `src/email-templates.mjs` | Define o visual HTML das mensagens |
+| `src/email-verification.mjs` | Escolhe destinatário, cria token e envia confirmação/ativação |
+| `src/password-reset.mjs` | Envia recuperação e aviso de troca de senha |
 
-Os valores acima são exemplos. No painel não coloque aspas ao redor dos valores. Salve e faça novo deploy. O render.yaml revisado solicita as variáveis; alterar esse arquivo não garante atualização de um serviço já criado manualmente.
+As mensagens incluem HTML e texto simples. Ao alterar um texto, confira ambas as versões.
 
-Para teste restrito, o remetente onboarding@resend.dev só permite enviar ao endereço da sua conta Resend. Esse mesmo endereço precisa ter uma conta cadastrada no site. Para outros destinatários, use seu domínio verificado.
+## Configuração necessária
 
-## 3. Banco de dados
+`RESEND_API_KEY` contém a chave de envio. `EMAIL_FROM` contém o remetente autorizado. `APP_ORIGIN` define o endereço usado nos links; na ausência dele em produção, o código usa `RENDER_EXTERNAL_URL`.
 
-A tabela password_resets precisa existir. Com DATABASE_URL configurada no seu ambiente de administração, execute `npm run db:migrate`, ou aplique supabase/migrations/002_password_reset.sql no editor SQL do banco já existente. O comando aplica também as migrações 001 e 003. Faça backup antes de alterar o banco de produção. O deploy não executa migrações automaticamente.
+Para destinatários reais, verifique um domínio que você controla na Resend e configure os registros DNS que ela indicar. O remetente precisa usar esse domínio autorizado. O endereço gratuito `onrender.com` não dá controle sobre o DNS desse domínio.
 
-## 4. Conferência ponta a ponta
+O remetente de teste `onboarding@resend.dev` restringe o envio ao e-mail da conta Resend. Não interprete sucesso nesse teste como envio liberado para todos os clientes. Não copie marcadores ou endereços de exemplo como configuração real.
 
-1. Cadastre uma conta de teste no site com e-mail que você controla.
-2. Abra /esqueci-senha.html e solicite a recuperação.
-3. Confira Emails/Logs na Resend e a caixa de entrada/spam. A resposta genérica do site protege a existência das contas; ela não comprova entrega.
-4. Abra o link e defina uma senha com pelo menos 8 caracteres.
-5. Verifique que a senha antiga e as sessões anteriores não funcionam, a nova senha funciona e o link usado é rejeitado.
-6. Confira o aviso de senha alterada. Pedidos repetidos para a mesma conta têm intervalo mínimo de 60 segundos.
+## Se a mensagem não chegar
 
-## Diagnóstico
+1. Confira entrada e spam.
+2. Veja se há envio registrado na Resend e qual status ele possui.
+3. Se não houver registro, confira os logs do Render no horário do pedido.
+4. Confira se a conta existe, se o intervalo de um minuto passou e se a migração necessária está aplicada.
 
-- 503 no site: chave ou remetente ausente no servidor.
-- Resend HTTP 401/403 nos logs: confira chave, permissão, domínio e destinatário permitido no modo de teste.
-- HTTP 422: confira campos e remetente.
-- HTTP 429: quota ou frequência excedida.
-- Resposta genérica sem registro na Resend: conta inexistente, intervalo de 60 segundos ou falha de processamento/banco; confira logs do servidor e migração 002.
-- Link aponta para outro site ou erro de origem/host: corrija APP_ORIGIN.
-- E-mail aceito pela API não significa entrega à caixa de entrada; confira status e eventuais rejeições no painel.
+| Mensagem | O que conferir |
+| --- | --- |
+| Envio indisponível / 503 | Chave e remetente no ambiente do servidor |
+| Resend HTTP 401 | Chave válida |
+| Resend HTTP 403 | Permissão, domínio/remetente e destinatário permitido |
+| Resend HTTP 422 | Campos da mensagem e remetente |
+| Resend HTTP 429 | Quota ou frequência de envio |
+| Link aponta ao site errado | `APP_ORIGIN` ou endereço automático do Render |
+| Link inválido/expirado | Peça um novo; links duram 30 minutos e têm uso único |
+| Link pede outro navegador | Abra o link original no navegador do cadastro |
 
-Não coloque a chave em HTML, JavaScript público ou GitHub. Não envie a chave em conversa ou captura de tela.
+Envio acontece em segundo plano, sem fila durável. Reinício durante o envio pode exigir novo pedido. A mensagem genérica de solicitação não garante entrega; o aceite da API da Resend também não garante chegada à caixa de entrada.
 
-## Fontes oficiais consultadas
-
-https://resend.com/docs/dashboard/domains/introduction
-https://resend.com/docs/dashboard/api-keys/introduction
-https://resend.com/docs/api-reference/errors
+Documentação oficial: [domínios](https://resend.com/docs/dashboard/domains/introduction), [chaves](https://resend.com/docs/dashboard/api-keys/introduction) e [erros](https://resend.com/docs/api-reference/errors).

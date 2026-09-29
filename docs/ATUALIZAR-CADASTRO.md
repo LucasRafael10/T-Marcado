@@ -1,26 +1,25 @@
-# Atualização do cadastro — 29/09/2026
+# O que mudou no cadastro simplificado
 
-Preparada sobre o commit 15db510 do repositório LucasRafael10/T-Marcado.
+Versão de referência: `fa95b45`, preparada em 29/09/2026. O pacote anterior de código se chama `Ta-Marcado-cadastro-simplificado.zip`. Este pacote contém somente documentos e não instala essas funcionalidades por si só.
 
-## Instalar
+## Antes e depois
 
-Extraia o ZIP e envie as pastas public, src, tests e docs para a raiz do repositório, preservando os caminhos e substituindo os arquivos correspondentes. Não apague as pastas atuais: este pacote contém somente os arquivos alterados, não o projeto inteiro. Faça um único commit com todos os arquivos para publicar o frontend e o servidor juntos. Não é necessário executar SQL nem alterar variáveis no Render para esta atualização.
+| Antes | Na versão simplificada |
+| --- | --- |
+| Não havia barra de senha | Mostra fraca, moderada ou forte enquanto digita |
+| A divergência aparecia ao enviar | Mostra imediatamente se as senhas conferem |
+| Após cadastrar, abria formulário de reenvio | Dispara envio e abre tela de espera |
+| Organizador definia senha outra vez ao confirmar | Confirma sem trocar a senha original |
+| Era preciso voltar manualmente ao site | A confirmação abre o painel; a aba de espera também acompanha |
 
-O acesso de escrita ao GitHub não foi utilizado. As mudanças ainda precisam ser enviadas e implantadas. Se houver mudanças posteriores ao commit acima nos mesmos arquivos, compare antes de substituir.
+O link do organizador deve ser aberto no mesmo navegador do cadastro. O cerimonialista convidado continua escolhendo sua senha na ativação, pois não preencheu o cadastro do organizador.
 
-## Comportamento
+A barra usa comprimento, variedade e algumas sequências comuns. Ela orienta; não impõe uma nova regra obrigatória de senha forte. O servidor mantém o mínimo de 8 caracteres e valida a confirmação no cadastro.
 
-- Durante o cadastro, a barra estima senha fraca, moderada ou forte; o texto informa quando as senhas coincidem. A estimativa é local, sem enviar a senha a terceiros; não consulta listas de vazamentos e não é garantia de resistência a ataques.
-- A senha é escolhida uma vez no cadastro e seu hash permanece igual após confirmar.
-- O cadastro dispara o envio e abre uma página de espera. Não solicita que a pessoa digite novamente o e-mail. O reenvio é opcional e usa o e-mail da sessão, com intervalo de um minuto.
-- A página de confirmação ativa a conta e abre o painel automaticamente. A página de espera também detecta a confirmação.
-- Abra o link no mesmo navegador/perfil usado para cadastrar. Essa ligação impede que alguém cadastre o e-mail de outra pessoa com uma senha conhecida pelo atacante e consiga acesso após a vítima confirmar. Se abrir em outro navegador, copie o link original do e-mail para o navegador do cadastro. Se perdeu a sessão, entre com a senha original para retomar; a recuperação de senha continua disponível.
-- A sessão anterior à confirmação não dá acesso a eventos. Ao confirmar, sessões diferentes da que apresentou o link são invalidadas.
-- Cerimonialistas convidados não criaram uma senha no formulário de cadastro; apenas esses convites continuam pedindo a senha pessoal na ativação.
-- Cadastro duplicado orienta entrar ou recuperar senha, sem substituir a senha já existente.
+## Instalação do código, se ainda não foi feita
 
-## Verificação
+Use o ZIP de código enviado anteriormente. Extraia e copie os arquivos para seus caminhos correspondentes, sem apagar pastas inteiras. Publique frontend e servidor juntos. Não há nova migração SQL ou variável obrigatória nessa atualização.
 
-22 testes automatizados passaram: API, isolamento, cookies, senha original preservada, link de uso único, expiração, confirmação sem senha, bloqueio de outro navegador, força estimada e coincidência de senhas. Os testes de interface executam os scripts com um DOM simulado; a revisão visual em navegador ficou pendente por indisponibilidade do executável neste ambiente.
+## Instalação desta documentação
 
-Depois do deploy Live, teste no computador e no celular: criar conta, conferir a barra, aguardar o e-mail, abrir o link no mesmo navegador e observar o painel. O envio depende da configuração existente da Resend; o remetente de teste continua sujeito às restrições da conta.
+Copie apenas a pasta `docs` deste ZIP para o projeto, substituindo os documentos correspondentes. Comece por [README.md](README.md). Isso atualiza as explicações e não muda o comportamento do site.

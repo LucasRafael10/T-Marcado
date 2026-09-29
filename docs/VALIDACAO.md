@@ -1,18 +1,43 @@
-# Validação desta entrega
+# Testar e conferir o projeto
 
-Executada em 14/09/2026, com Node.js 22.15.0 e PostgreSQL embutido via PGlite. Dez cenários de integração passaram; o runner informa onze testes ao incluir o teste pai.
+## Resultado disponível
 
-- Páginas e referências locais a CSS/JS acessíveis; arquivos do servidor e `.env` não são publicados.
-- Cadastro, rejeição de datas inválidas, origem externa bloqueada e cookie HttpOnly/Secure.
-- Login válido/inválido e isolamento entre organizadores.
-- Convidados, telefone duplicado, token inválido e redução dos dados retornados publicamente.
-- Limites de lugares/crianças e confirmação.
-- Duas reservas simultâneas produzem um sucesso e um conflito; recusa libera a reserva; reserva concorrente com recusa não deixa presente reservado ao recusado.
-- Autocadastro exige aprovação.
-- Cerimonialista consulta apenas evento autorizado e não consegue editar.
-- Prazo expirado, rollback de transação e logout.
-- RLS habilitada nas seis tabelas e restrições de integridade verificadas no mecanismo PostgreSQL.
+Na preparação do cadastro simplificado em 29/09/2026, `npm test` informou **22 testes aprovados, zero falhas**. Esse número inclui o teste agrupador da API. A atualização atual é somente de documentação: não representa uma nova execução dos testes do sistema.
 
-Os testes acessaram a API HTTP real do servidor local e executaram a migração SQL real no PGlite. Não usaram o pool remoto `pg` nem credenciais do Supabase. A concorrência do PGlite é serializada internamente; comportamento sob carga e conexões PostgreSQL independentes precisa ser validado em ambiente remoto de homologação.
+| Arquivo | Cobertura |
+| --- | --- |
+| `tests/integration.test.mjs` | Cadastro, sessões, confirmação, senha original, isolamento, convidados, presentes, recuperação, banco, limites e role restrita |
+| `tests/email.test.mjs` | HTML de recuperação, envio Resend simulado e diagnóstico de falhas |
+| `tests/signup-ui.test.mjs` | Estados da barra, confirmação de senha e scripts de ativação com DOM simulado |
 
-Não foram realizados deploy no Render, execução do SQL no projeto do usuário ou revisão visual em navegador desta versão. O relatório do ZIP original não foi adotado como prova de testes desta entrega.
+Os testes usam PGlite, um PostgreSQL embutido, e uma Resend simulada. Não enviam e-mail real nem consultam o banco de produção. O PGlite serializa operações internamente: os cenários concorrentes não substituem ensaios com múltiplas conexões PostgreSQL remotas.
+
+A revisão visual no navegador ficou pendente por indisponibilidade do executável de teste. Os testes de interface verificam comportamento de scripts, não aparência final em todos os tamanhos de tela.
+
+## Rodar testes
+
+Na pasta do projeto, com Node compatível com `package.json` (mínimo declarado: 22.13):
+
+```sh
+npm ci
+npm test
+```
+
+Para executar o servidor normalmente, use `npm start` com as variáveis e banco configurados. Esse comando usa a conexão que você fornecer; não é automaticamente um ambiente de testes.
+
+## Atenção ao npm run preview
+
+O script `scripts/preview.mjs` cria dados temporários e desativa o envio pela Resend. Porém, cria a conta sem marcar `email_verified` e não configura envio. Por isso, o login da demonstração não conclui o fluxo atual de confirmação. Use os testes automatizados para verificar a API; não trate esse preview como demonstração completa do cadastro. Nenhuma correção nesse script está incluída neste pacote.
+
+## Conferir após publicar o cadastro
+
+1. Verifique deploy Live e `/health` respondendo `ok`.
+2. Crie uma conta de teste com e-mail que você controla.
+3. Digite senhas diferentes e iguais; observe texto e barra.
+4. Conclua o cadastro e confira que a espera não pede o e-mail de novo.
+5. Abra o link no mesmo navegador; confira que não pede outra senha e abre o painel.
+6. Saia e entre com a senha original.
+7. Confira recuperação de senha e acesso de cerimonialista.
+8. Faça uma conferência no celular e no computador.
+
+Use banco e endereços de teste para não misturar verificações com dados de clientes. Não publique capturas com senhas, URI, chaves ou links individuais completos.

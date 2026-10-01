@@ -27,7 +27,7 @@ if (process.env.NODE_ENV === "production") {
   const role = await get("SELECT current_user AS name");
   if (role.name !== "tamarcado_app")
     throw new Error(
-      "Configure DATABASE_URL com a role tamarcado_app apÃ³s executar 005_runtime_role.sql.",
+      "Configure DATABASE_URL com a role tamarcado_app após executar 005_runtime_role.sql.",
     );
 }
 const mime = {
@@ -41,7 +41,7 @@ const server = http.createServer(async (req, res) => {
   try {
     const host = req.headers.host;
     if (req.url !== "/health" && host !== new URL(appOrigin).host)
-      fail(403, "Host invÃ¡lido. Confira APP_ORIGIN.");
+      fail(403, "Host inválido. Confira APP_ORIGIN.");
     res.setHeader("X-Content-Type-Options", "nosniff");
     res.setHeader("X-Frame-Options", "DENY");
     res.setHeader(
@@ -69,7 +69,7 @@ const server = http.createServer(async (req, res) => {
       return;
     }
     if (req.method !== "GET" && req.method !== "HEAD")
-      fail(405, "MÃ©todo nÃ£o permitido.");
+      fail(405, "Método não permitido.");
     const rel = decodeURIComponent(
       url.pathname === "/" ? "/index.html" : url.pathname,
     );
@@ -79,13 +79,13 @@ const server = http.createServer(async (req, res) => {
       !mime[path.extname(file)] ||
       !existsSync(file)
     )
-      fail(404, "Arquivo nÃ£o encontrado.");
+      fail(404, "Arquivo não encontrado.");
     res.setHeader("Content-Type", mime[path.extname(file)]);
     res.end(req.method === "HEAD" ? undefined : readFileSync(file));
   } catch (err) {
     if (err.code === "23505") {
       err.status = 409;
-      err.message = "JÃ¡ existe um cadastro com estes dados.";
+      err.message = "Já existe um cadastro com estes dados.";
     }
     res.statusCode = err.status || 500;
     res.setHeader("Content-Type", "application/json; charset=utf-8");
@@ -93,7 +93,7 @@ const server = http.createServer(async (req, res) => {
       JSON.stringify({
         error: err.status
           ? err.message
-          : "NÃ£o foi possÃ­vel concluir. Tente novamente.",
+          : "Não foi possível concluir. Tente novamente.",
       }),
     );
     if (!err.status)
@@ -104,7 +104,7 @@ const server = http.createServer(async (req, res) => {
   }
 });
 server.listen(port, "0.0.0.0", () =>
-  console.log(`TÃ¡ Marcado disponÃ­vel em ${appOrigin}`),
+  console.log(`Tá Marcado disponível em ${appOrigin}`),
 );
 server.on("close", () => clearInterval(cleanup));
 export { server };

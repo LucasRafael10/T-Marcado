@@ -32,7 +32,8 @@ function renderDetailTable() {
     (g) =>
       (currentDetailStatusFilter === "todos" ||
         g.status === currentDetailStatusFilter) &&
-      normalize(g.nome + " " + g.telefone).includes(q),
+      (normalize(g.nome + " " + g.telefone).includes(q) ||
+        (/\d/.test(q) && g.telefone.includes(q.replace(/\D/g, "")))),
   );
   $("detailTableBody").innerHTML = list
     .map((g) => "<tr>" + guestRow(g) + "</tr>")

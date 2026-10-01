@@ -176,6 +176,10 @@ test("Fluxos da API com PostgreSQL embutido", async (t) => {
     assert.equal((await request("/.env")).status, 404);
     assert.equal((await request("/server.mjs")).status, 404);
     assert.equal(
+      (await request("/pagina-inexistente.html")).data.error,
+      "Arquivo não encontrado.",
+    );
+    assert.equal(
       (await request("/", "GET", undefined, "", { host: "evil.test" })).status,
       403,
     );

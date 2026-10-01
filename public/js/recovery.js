@@ -2,15 +2,24 @@ const mode = document.body.dataset.mode;
 const form = document.getElementById("recoveryForm");
 const message = document.getElementById("message");
 const resetting = Boolean(document.getElementById("password"));
-const token = new URLSearchParams(location.hash.slice(1)).get("token");
-if (resetting) {
+let token;
+function loadResetLink() {
+  token = new URLSearchParams(location.hash.slice(1)).get("token");
   history.replaceState(null, "", location.pathname);
+  form.reset();
+  form.hidden = false;
+  message.dataset.state = "";
+  message.textContent = "";
   if (!token || !/^[a-f0-9]{64}$/.test(token)) {
     form.hidden = true;
     message.dataset.state = "error";
     message.textContent =
       "Link inválido. Solicite um novo link de recuperação.";
   }
+}
+if (resetting) {
+  loadResetLink();
+  window.addEventListener("hashchange", loadResetLink);
 }
 form.addEventListener("submit", async (event) => {
   event.preventDefault();

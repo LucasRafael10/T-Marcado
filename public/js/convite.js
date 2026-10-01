@@ -79,9 +79,18 @@ document.addEventListener("DOMContentLoaded", () =>
       $("nameForm").hidden = true;
       return;
     }
-    const info = await api(
-      eventPath() + "/public" + (token ? "?token=" + token : ""),
-    );
+    let info;
+    try {
+      info = await api(
+        eventPath() + "/public" + (token ? "?token=" + token : ""),
+      );
+    } catch (error) {
+      $("eventNames").textContent = "Convite indisponível";
+      $("eventDetails").textContent = error.message;
+      $("nameForm").hidden = true;
+      $("publicRegister").hidden = true;
+      throw error;
+    }
     eventInfo = info.event;
     currentGuest = info.guest;
     applyEventTheme(eventInfo.cor);
@@ -112,7 +121,7 @@ document.addEventListener("DOMContentLoaded", () =>
           $("nameError").classList.remove("show");
           openConfirm();
         } catch (err) {
-          $("nameError").textContent = err.message;
+          $("nameErrorMessage").textContent = err.message;
           $("nameError").classList.add("show");
         }
       });

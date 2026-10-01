@@ -183,7 +183,7 @@ test("Fluxos da API com PostgreSQL embutido", async (t) => {
     for (const name of readdirSync(root).filter((n) => n.endsWith(".html"))) {
       const html = readFileSync(new URL(name, root), "utf8");
       for (const match of html.matchAll(/(?:src|href)="([^"#]+)"/g)) {
-        if (match[1].startsWith("http")) continue;
+        if (/^(?:https?:|mailto:)/i.test(match[1])) continue;
         assert.ok(existsSync(new URL(match[1], root)), `${name}: ${match[1]}`);
         assert.equal((await request("/" + match[1])).status, 200);
       }

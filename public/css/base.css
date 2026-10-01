@@ -206,3 +206,28 @@ footer .wrap {
 #password-strength[data-score="3"]::-moz-meter-bar{background:#2f6846}
 #password-match[data-state="mismatch"]{color:#a23b32}
 #password-match[data-state="match"]{color:#2f6846}
+
+/* Contato por e-mail nas telas de entrada e recuperação. */
+.support-contact { margin: 24px 0 0; text-align: center; }
+.support-contact-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 48px;
+  max-width: 100%;
+  padding: 12px 18px;
+  border: 1px solid var(--green);
+  border-radius: 8px;
+  background: var(--paper-raised);
+  color: var(--green-deep);
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.5;
+  text-align: center;
+  text-decoration: none;
+}
+.support-contact-button:hover { background: var(--green-deep); color: var(--paper-raised); }
+.support-contact-button:focus-visible { outline: 3px solid var(--gold); outline-offset: 3px; }
+.support-contact small { display: block; margin-top: 8px; font-size: 12px; color: var(--ink-soft); overflow-wrap: anywhere; }
+.hero .support-contact { margin: 0 0 28px; text-align: left; }
+.login-shell .support-contact-button { width: 100%; }

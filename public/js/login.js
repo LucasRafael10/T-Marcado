@@ -6,12 +6,23 @@ function selectRole(role) {
     $(id).classList.toggle("active", active);
     $(id).setAttribute("aria-pressed", String(active));
   });
+  $("signupLink").href =
+    role === "cerimonialista" ? "cadastro-cerimonialista.html" : "index.html";
+  $("signupLink").textContent =
+    role === "cerimonialista"
+      ? "Criar conta de cerimonialista"
+      : "Criar meu evento";
   $("loginSub").textContent =
     role === "noiva"
       ? "Entre para organizar o seu evento."
       : "Entre para acompanhar os eventos dos seus clientes.";
 }
 document.addEventListener("DOMContentLoaded", () => {
+  selectRole(
+    new URLSearchParams(location.search).get("perfil") === "cerimonialista"
+      ? "cerimonialista"
+      : "noiva",
+  );
   $("tabNoiva").onclick = () => selectRole("noiva");
   $("tabCerimonialista").onclick = () => selectRole("cerimonialista");
   $("loginForm").onsubmit = (e) => {

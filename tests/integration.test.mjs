@@ -523,13 +523,24 @@ test("Fluxos da API com PostgreSQL embutido", async (t) => {
       nome: "Cerimonialista",
       password: "SenhaTeste123!",
     };
+    const registered = await request("/api/register", "POST", {
+      ...access,
+      role: "cerimonialista",
+      passwordConfirm: access.password,
+    });
+    assert.equal(registered.status, 200);
     for (let i = 0; i < 2; i++)
       assert.equal(
-        (await request(`/api/events/${eid}/access`, "POST", access, owner))
-          .status,
+        (
+          await request(
+            `/api/events/${eid}/access`,
+            "POST",
+            { email: access.email },
+            owner,
+          )
+        ).status,
         200,
       );
-    assert.equal((await signIn(access.email, "cerimonialista")).status, 401);
     await activation(access.email);
     planner = (
       await request("/api/login", "POST", {
@@ -538,6 +549,24 @@ test("Fluxos da API com PostgreSQL embutido", async (t) => {
         role: "cerimonialista",
       })
     ).cookie;
+    assert.deepEqual(
+      (await request("/api/events", "GET", undefined, planner)).data,
+      [],
+    );
+    const inbox = (
+      await request("/api/planner-requests", "GET", undefined, planner)
+    ).data;
+    assert.equal(
+      (
+        await request(
+          `/api/events/${eid}/access-response`,
+          "POST",
+          { requestId: inbox[0].id, decision: "accepted" },
+          planner,
+        )
+      ).status,
+      200,
+    );
     const events = (await request("/api/events", "GET", undefined, planner))
       .data;
     assert.equal(events.length, 1);

@@ -109,3 +109,18 @@
   padding: 0;
   text-decoration: underline;
 }
+
+/* Solicitações de vínculo, antes da liberação dos detalhes. */
+.request-section { margin-bottom: 38px; }
+.request-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.request-section > p { color: var(--ink-soft); margin: 12px 0 18px; line-height: 1.6; }
+.request-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr)); gap: 16px; }
+.request-card { padding: 22px; border: 1px solid var(--line); border-radius: 8px; background: var(--paper-raised); overflow-wrap: anywhere; }
+.request-card h3 { font-size: 24px; margin-bottom: 10px; }
+.request-card p { margin-bottom: 12px; line-height: 1.6; }
+.request-actions { display: flex; gap: 12px; flex-wrap: wrap; }
+.request-actions button { min-height: 44px; }
+.event-information { padding: 20px; margin-bottom: 20px; border: 1px solid var(--line); border-radius: 8px; overflow-wrap: anywhere; }
+.event-information p { margin-bottom: 10px; line-height: 1.6; }
+.event-information h3 { font-size: 22px; margin-top: 18px; }
+.event-information ul { padding-left: 22px; line-height: 1.8; }

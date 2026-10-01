@@ -97,7 +97,7 @@ function decision(item, action) {
       : "Recusar este pedido?";
   $("decision-person").textContent = item.nome + " · " + item.email;
   $("decision-explanation").textContent = approve
-    ? account && item.role !== "cerimonialista"
+    ? account
       ? "A pessoa poderá entrar com a senha que já cadastrou."
       : "Você receberá um link válido por 30 minutos. Entregue-o ao titular por um canal conhecido. Gerar outro invalida o anterior."
     : "Registre o motivo da recusa. Esta ação não altera a senha da pessoa.";

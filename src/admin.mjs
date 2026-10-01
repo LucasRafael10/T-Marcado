@@ -1,7 +1,7 @@
 import { randomBytes } from "node:crypto";
 import { adminAccounts, manualApproval } from "./admin-config.mjs";
 import { get, all, run, transaction } from "./database.mjs";
-import { verify, hash, id } from "./passwords.mjs";
+import { verify, hash } from "./passwords.mjs";
 import { fail } from "./validation.mjs";
 import { secureCookie } from "./config.mjs";
 import { limit, consume } from "./rate-limit.mjs";
@@ -197,16 +197,6 @@ export async function adminRoute(req, res, url, b) {
         );
         if (decision === "reject")
           await run("DELETE FROM sessions WHERE user_id=?", targetId);
-        if (decision === "approve" && user.role === "cerimonialista") {
-          const requestId = id();
-          await run(
-            "INSERT INTO manual_access_requests(id,user_id,kind,status,requested_at) VALUES(?,?,'activation','pending',?)",
-            requestId,
-            targetId,
-            Date.now(),
-          );
-          return issueManualLink(requestId, targetId, admin.email, note);
-        }
         return {
           message:
             decision === "approve"

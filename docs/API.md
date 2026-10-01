@@ -8,7 +8,7 @@ Pedidos que não são GET exigem origem igual à configuração do site. Os camp
 
 | Método e endereço | Para que serve | Acesso |
 | --- | --- | --- |
-| `POST /api/register` | Cria organizador/evento e dispara confirmação | Público, com limite |
+| `POST /api/register` | Cria organizador/evento ou conta de cerimonialista; aguarda aprovação conforme o modo | Público, com limite |
 | `POST /api/login` | Confere senha e cria sessão | Público, com limite |
 | `POST /api/logout` | Apaga a sessão apresentada | Cookie atual |
 | `GET /api/me` | Devolve dados básicos da conta | Sessão e e-mail confirmado |
@@ -20,7 +20,7 @@ Pedidos que não são GET exigem origem igual à configuração do site. Os camp
 | `POST /api/forgot-password` | Solicita recuperação | Público, com limite |
 | `POST /api/reset-password` | Troca senha e invalida sessões | Token de recuperação válido |
 
-O cadastro recebe `nome`, `email`, `password`, `passwordConfirm`, `titulo`, `tipo`, `data`, `prazo` e `local`. Confirmação de organizador envia só `token`; convite de cerimonialista também envia `password` e `passwordConfirm`.
+O cadastro recebe `nome`, `email`, `password` e `passwordConfirm`. `role` pode ser `noiva` (padrão, organizador) ou `cerimonialista`; nenhum outro perfil é aceito. Para organizador, também recebe `titulo`, `tipo`, `data`, `prazo`, `local` e opcionalmente `cerimonialistaEmail`. Para cerimonialista, não cria evento. No modo manual, a aprovação da equipe libera a senha já cadastrada e não retorna link de ativação.
 
 ## Eventos e convidados
 
@@ -39,7 +39,17 @@ Nos caminhos, `{evento}`, `{convidado}` e `{presente}` são marcadores explicati
 | `GET /api/events/{evento}/gifts` | Lista presentes disponíveis | Token individual |
 | `POST /api/events/{evento}/gifts` | Adiciona presente | Dono |
 | `POST /api/events/{evento}/reserve/{presente}` | Reserva ou cancela reserva própria | Token, presença confirmada e prazo |
-| `POST /api/events/{evento}/access` | Concede leitura ao cerimonialista | Dono |
+| `POST /api/events/{evento}/access` | Solicita acompanhamento pelo e-mail de uma cerimonialista cadastrada | Dono |
+
+### Solicitações à cerimonialista
+
+| Método e endereço | Operação | Permissão |
+| --- | --- | --- |
+| `GET /api/planner-requests` | Lista pedidos pendentes com resumo da cliente/evento | Cerimonialista destinatária, conta liberada |
+| `GET /api/events/{evento}/access` | Lista e-mails e status dos vínculos | Dono |
+| `POST /api/events/{evento}/access-response` | Aceita ou recusa | Cerimonialista destinatária |
+
+O envio em `/access` recebe somente `{ "email": "cerimonialista@example.com" }`. A resposta em `/access-response` recebe `{ "requestId": "ID recebido na lista", "decision": "accepted" }` ou `rejected`. Antes do aceite não há acesso à lista completa do evento. A operação é transacional e serializada pelo evento. Contas inexistentes não são criadas automaticamente.
 
 ## Como interpretar uma falha
 

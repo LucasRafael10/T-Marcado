@@ -42,6 +42,15 @@ if (process.env.NODE_ENV === "test" && process.env.TEST_DATABASE === "pglite") {
       "utf8",
     ),
   );
+  await pool.exec(
+    readFileSync(
+      new URL(
+        "../supabase/migrations/007_planner_requests.sql",
+        import.meta.url,
+      ),
+      "utf8",
+    ),
+  );
 } else {
   if (!process.env.DATABASE_URL)
     throw new Error(

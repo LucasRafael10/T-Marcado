@@ -30,6 +30,11 @@
 
   <!-- ===== LISTAGEM DE EVENTOS ===== -->
   <div id="eventListSection">
+    <section class="request-section" aria-labelledby="requestsTitle">
+      <div class="request-heading"><h2 id="requestsTitle">Solicitações de clientes</h2><button class="chip-btn" id="refreshRequests" type="button">Atualizar</button></div>
+      <p>Confira quem solicitou seu acompanhamento. Os convidados e os detalhes completos ficam disponíveis depois que você aceitar.</p>
+      <div id="plannerRequests" class="request-grid" aria-live="polite"></div>
+    </section>
     <div class="page-head">
       <div>
         <h1>Seus eventos</h1>
@@ -55,6 +60,8 @@
       </div>
       <span class="readonly-tag">👁 Somente leitura — edição pelo organizador</span>
     </div>
+
+    <section id="eventInformation" class="event-information" aria-label="Informações do evento"></section>
 
     <div class="toolbar">
       <input type="text" id="detailSearch" placeholder="Buscar por nome ou telefone...">

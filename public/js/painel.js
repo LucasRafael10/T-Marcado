@@ -35,6 +35,29 @@ async function refresh() {
   updateStats();
   renderTable();
   renderGifts();
+  await refreshAccess();
+}
+async function refreshAccess() {
+  const eid = currentEvent.id;
+  try {
+    const requests = await api("/events/" + eid + "/access");
+    if (currentEvent.id !== eid) return;
+    const labels = {
+      pending: "Aguardando resposta",
+      accepted: "Aceita — acesso liberado",
+      rejected: "Solicitação recusada",
+    };
+    $("accessStatus").innerHTML = requests.length
+      ? requests
+          .map(
+            (r) =>
+              `<p><strong>${escapeHTML(r.nome)}</strong><br>${escapeHTML(r.email)}<br><span>${labels[r.status]}</span></p>`,
+          )
+          .join("")
+      : "<p>Nenhuma solicitação enviada para este evento.</p>";
+  } catch (e) {
+    if (currentEvent.id === eid) $("accessStatus").textContent = e.message;
+  }
 }
 function updateStats() {
   const g = currentEvent.guests;
@@ -318,14 +341,11 @@ document.addEventListener("DOMContentLoaded", () =>
       e.preventDefault();
       action(e.submitter, async () => {
         const result = await api(eventPath() + "/access", "POST", {
-          nome: $("accessName").value,
           email: $("accessEmail").value,
         });
         $("accessForm").reset();
-        notice(
-          result.message ||
-            "Acesso vinculado. A pessoa deve concluir a confirmação para entrar.",
-        );
+        await refreshAccess();
+        notice(result.message);
       });
     };
     $("refreshData").onclick = () => action($("refreshData"), refresh);

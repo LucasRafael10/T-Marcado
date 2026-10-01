@@ -1,3 +1,9 @@
+import {
+  requestPlanner,
+  plannerInbox,
+  respondToPlannerRequest,
+  ownerPlannerRequests,
+} from "./planner-requests.mjs";
 import { manualApproval } from "./admin-config.mjs";
 import { adminRoute } from "./admin.mjs";
 import { requestManualReset, resetManually } from "./manual-recovery.mjs";
@@ -243,16 +249,30 @@ async function route(req, res, url, b) {
         409,
         "Este e-mail já tem cadastro. Entre com sua senha ou use Esqueci minha senha.",
       );
-    const data = date(b.data, "Data"),
-      prazo = date(b.prazo, "Prazo");
-    if (prazo > data || data < today())
-      fail(400, "Confira a data do evento e o prazo de confirmação.");
-    const titulo = txt(b.titulo, "Nome do evento"),
-      tipo = txt(b.tipo, "Tipo"),
-      local = txt(b.local, "Local");
+    const role = b.role ?? "noiva";
+    if (!["noiva", "cerimonialista"].includes(role))
+      fail(400, "Escolha o perfil de organizador ou cerimonialista.");
+    let details;
+    if (role === "noiva") {
+      const data = date(b.data, "Data"),
+        prazo = date(b.prazo, "Prazo");
+      if (prazo > data || data < today())
+        fail(400, "Confira a data do evento e o prazo de confirmação.");
+      details = [
+        txt(b.titulo, "Nome do evento"),
+        txt(b.tipo, "Tipo"),
+        data,
+        txt(b.local, "Local"),
+        prazo,
+      ];
+    }
     const uid = await transaction(async () => {
-      const uid = await user(nome, email, password, "noiva");
-      await event(uid, titulo, tipo, data, local, prazo);
+      const uid = await user(nome, email, password, role);
+      if (details) {
+        const eid = await event(uid, ...details);
+        if (b.cerimonialistaEmail !== undefined && b.cerimonialistaEmail !== "")
+          await requestPlanner(eid, b.cerimonialistaEmail);
+      }
       return uid;
     });
     await loginCookie(res, uid);
@@ -265,12 +285,14 @@ async function route(req, res, url, b) {
     return { ...(await requestPendingVerification(email)), pending: true };
   }
   if (p === "/api/me" && m === "GET") return await auth(req);
+  if (p === "/api/planner-requests" && m === "GET")
+    return plannerInbox(await auth(req));
   if (p === "/api/events" && m === "GET") {
     const u = await auth(req);
     return Promise.all(
       (
         await all(
-          "SELECT DISTINCT e.* FROM events e LEFT JOIN access a ON a.event_id=e.id WHERE e.owner=? OR a.user_id=? ORDER BY e.data",
+          "SELECT DISTINCT e.*,u.nome AS cliente_nome,u.email AS cliente_email FROM events e JOIN users u ON u.id=e.owner LEFT JOIN access a ON a.event_id=e.id WHERE e.owner=? OR a.user_id=? ORDER BY e.data",
           u.id,
           u.id,
         )
@@ -434,7 +456,12 @@ async function route(req, res, url, b) {
       }
       return { ok: true };
     }
-    const e = await allowed(req, eid, m !== "GET");
+    if (action === "access-response" && m === "POST") {
+      await limit(req, "planner-decisions", 30);
+      return respondToPlannerRequest(await auth(req), eid, b);
+    }
+    const e = await allowed(req, eid, m !== "GET" || action === "access");
+    if (action === "access" && m === "GET") return ownerPlannerRequests(eid);
     if (!action && m === "PATCH") {
       const titulo = txt(b.titulo, "Nome"),
         local = txt(b.local, "Local"),
@@ -554,36 +581,8 @@ async function route(req, res, url, b) {
       return { ok: true };
     }
     if (action === "access" && m === "POST") {
-      const email = txt(b.email, "E-mail").toLowerCase();
-      if (!manualApproval) requireEmail();
-      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))
-        fail(400, "Informe um e-mail válido.");
-      let u = await get("SELECT * FROM users WHERE email=?", email);
-      if (!u) {
-        u = {
-          id: await user(
-            txt(b.nome, "Nome"),
-            email,
-            id() + id(),
-            "cerimonialista",
-          ),
-          role: "cerimonialista",
-        };
-      }
-      if (u.role !== "cerimonialista")
-        fail(400, "Esta conta não é de cerimonialista.");
-      await run(
-        "INSERT INTO access VALUES(?,?) ON CONFLICT DO NOTHING",
-        eid,
-        u.id,
-      );
-      if (manualApproval)
-        return {
-          ok: true,
-          message:
-            "Acesso vinculado. Contas novas precisam da aprovação da equipe; a ativação será entregue após a conferência de identidade.",
-        };
-      return { ok: true, verificationEmail: email };
+      await limit(req, "planner-request", 15);
+      return requestPlanner(eid, b.email);
     }
   }
   fail(404, "Página ou operação não encontrada.");

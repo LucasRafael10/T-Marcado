@@ -69,7 +69,7 @@ Abra a página inicial e preencha **Criar conta e evento**. Em seguida:
 2. Abra o convite individual em uma janela anônima e confirme presença.
 3. Cadastre e reserve um presente.
 4. Atualize o painel para conferir os dados.
-5. Em **Acesso do cerimonialista**, crie/autorize a conta que poderá consultar esse evento. O cerimonialista entra pelo perfil correspondente na página de login.
+5. Em **Sua cerimonialista**, informe o e-mail da conta que ela já cadastrou. Ela entra pelo perfil Cerimonialista e aceita ou recusa o pedido; o evento só aparece após o aceite.
 
 As antigas credenciais de demonstração não foram incluídas. O ZIP original não continha banco SQLite com dados; portanto não há contas ou convidados reais migrados nesta entrega.
 
@@ -210,3 +210,7 @@ O endereço é opcional, pode ser preenchido mesmo na recusa e fica acessível �
 ## Aprovação manual de contas e recuperação de senha
 
 Painel exclusivo de três administradores em `/admin.html`. A ativação dispensa Resend e domínio próprio. Siga [ADMIN-SETUP.md](ADMIN-SETUP.md) para aplicar a migração 006, gerar credenciais privadas e configurar o modo manual no Render.
+
+## Aprovação direta e aceite da cerimonialista
+
+A aprovação de contas no modo manual libera a senha escolhida no cadastro, sem link. A cerimonialista se cadastra em `/cadastro-cerimonialista.html`. A cliente solicita o vínculo usando somente o e-mail dela; a cerimonialista aceita ou recusa pelo painel. Aplique a migração **007** conforme [docs/ATUALIZAR-VINCULO.md](docs/ATUALIZAR-VINCULO.md).

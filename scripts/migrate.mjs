@@ -37,6 +37,15 @@ try {
       "utf8",
     ),
   );
+  await executeMigration(
+    readFileSync(
+      new URL(
+        "../supabase/migrations/007_planner_requests.sql",
+        import.meta.url,
+      ),
+      "utf8",
+    ),
+  );
 } finally {
   await close();
 }

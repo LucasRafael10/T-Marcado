@@ -16,10 +16,10 @@ Execute a migração e ative o modo manual na mesma janela de manutenção, evit
 
 ## Uso diário
 
-- **Contas:** confira a identidade por contato conhecido. Aprove ou recuse com justificativa e sua senha administrativa. A aprovação libera o login com a senha que o cliente já escolheu. Novos cerimonialistas recebem um link para escolher a primeira senha, entregue pelo administrador após conferir a identidade.
+- **Contas:** confira a identidade por contato conhecido. Aprove ou recuse com justificativa e sua senha administrativa. A aprovação libera imediatamente o login com a senha que a pessoa já escolheu, tanto para clientes quanto para cerimonialistas. Não há link de ativação para novas contas. A cerimonialista se cadastra em `/cadastro-cerimonialista.html` antes de receber solicitações de clientes.
 - **Trocas de senha:** o usuário solicita em “Esqueci minha senha”. O pedido não altera a senha nem concede acesso. Após conferir a identidade, aprove e entregue o link individual ao titular. Cada link vale por **30 minutos**, funciona **uma vez**, e gerar outro invalida o anterior. A pessoa escolhe a senha; administradores não podem consultá-la. Ao concluir, todas as sessões de cliente dessa conta são encerradas.
 - **Histórico:** registra autor, conta, ação, horário e justificativa. Não coloque senhas, documentos ou dados sensíveis na justificativa.
-- Não confirme a identidade apenas porque alguém informou o e-mail. Use um canal que vocês já sabem pertencer ao titular. O painel não envia automaticamente mensagens ou notificações: acompanhem as filas e entreguem os links por um canal conhecido.
+- Não confirme a identidade apenas porque alguém informou o e-mail. Use um canal que vocês já sabem pertencer ao titular. O painel não envia automaticamente mensagens ou notificações: acompanhem as filas. Apenas a recuperação de senha continua exigindo a entrega de um link por um canal conhecido.
 - Sessões administrativas expiram em **8 horas**. Use “Sair da conta” em dispositivos compartilhados. Cada decisão exige novamente sua senha. Muitas tentativas seguidas bloqueiam temporariamente novas tentativas.
 
 ## Recuperar ou substituir um administrador
@@ -34,3 +34,7 @@ A recuperação pública é exclusiva de clientes. Para trocar um sócio ou recu
 4. Acesse `/api/admin/accounts` em uma janela anônima: deve responder 401. Uma sessão comum também não deve ter acesso.
 
 Testes locais: `npm ci` e `npm test`. Usam PostgreSQL em memória (PGlite), sem acessar o banco de produção nem enviar e-mails reais. O histórico de auditoria permite somente leitura e inserção para a role de execução; não exclusão/alteração.
+
+## Solicitações entre cliente e cerimonialista
+
+Aplique também `supabase/migrations/007_planner_requests.sql` no SQL Editor do Supabase. A cliente informa apenas o e-mail da cerimonialista já cadastrada. A solicitação aparece no painel da cerimonialista após a aprovação da conta da cliente. O aceite libera a leitura do evento; a recusa não concede acesso. Consulte [docs/ATUALIZAR-VINCULO.md](docs/ATUALIZAR-VINCULO.md).

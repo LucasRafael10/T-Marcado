@@ -561,32 +561,64 @@ test("Administração manual: autorização e recuperação completa", async (t)
       );
     },
   );
+  let plannerCookie, plannerRequestId;
   await t.test(
-    "cerimonialista convidado é aprovado e define a própria senha",
+    "cerimonialista cadastra senha e aprovação libera imediatamente, sem link",
     async () => {
-      const r = await request(
-        `/api/events/${eid}/access`,
-        "POST",
-        { nome: "Cerimonial", email: "planner@example.com" },
-        clientCookie,
-      );
-      assert.equal(r.status, 200, JSON.stringify(r.data));
-      assert.equal(r.data.verificationEmail, undefined);
+      const signup = await request("/api/register", "POST", {
+        nome: "Cerimonialista",
+        email: "planner@example.com",
+        role: "cerimonialista",
+        password: "Planejador!123",
+        passwordConfirm: "Planejador!123",
+      });
+      assert.equal(signup.status, 200, JSON.stringify(signup.data));
+      assert.equal(signup.data.pending, true);
       plannerId = (
         await db.get("SELECT id FROM users WHERE email='planner@example.com'")
       ).id;
-      const approved = await approve("accounts", plannerId);
-      assert.equal(approved.status, 200);
-      const token = new URL(approved.data.url).hash.slice(7);
+      assert.equal(
+        (await db.all("SELECT id FROM events WHERE owner=?", plannerId)).length,
+        0,
+      );
       assert.equal(
         (
-          await request("/api/reset-password", "POST", {
-            token,
-            password: "Planejador!123",
-            passwordConfirm: "Planejador!123",
-          })
+          await request(
+            "/api/planner-requests",
+            "GET",
+            undefined,
+            signup.cookie,
+          )
         ).status,
+        401,
+      );
+      const approved = await approve("accounts", plannerId);
+      assert.equal(approved.status, 200);
+      assert.equal(approved.data.url, undefined);
+      assert.equal(
+        (
+          await db.all(
+            "SELECT id FROM manual_access_requests WHERE user_id=?",
+            plannerId,
+          )
+        ).length,
+        0,
+      );
+      // A sessão que aguardava aprovação já pode entrar, sem outro passo.
+      assert.equal(
+        (await request("/api/me", "GET", undefined, signup.cookie)).status,
         200,
+      );
+      assert.equal(
+        (
+          await request(
+            "/api/verification-status",
+            "GET",
+            undefined,
+            signup.cookie,
+          )
+        ).data.verified,
+        true,
       );
       const login = await request("/api/login", "POST", {
         email: "planner@example.com",
@@ -595,10 +627,74 @@ test("Administração manual: autorização e recuperação completa", async (t)
       });
       assert.equal(login.status, 200);
       assert.equal(login.data.pending, false);
+      plannerCookie = login.cookie;
+      assert.equal(emailAttempts, 0);
+    },
+  );
+  await t.test(
+    "solicitação usa só e-mail existente e não concede acesso antes do aceite",
+    async () => {
+      for (const email of [
+        "desconhecida@example.com",
+        "cliente@example.com",
+        "invalido",
+      ]) {
+        const r = await request(
+          `/api/events/${eid}/access`,
+          "POST",
+          { email },
+          clientCookie,
+        );
+        assert.equal(r.status, 400, JSON.stringify(r.data));
+      }
       assert.equal(
-        (await request("/api/events", "GET", undefined, login.cookie)).data[0]
-          .id,
-        eid,
+        await db.get(
+          "SELECT id FROM users WHERE email='desconhecida@example.com'",
+        ),
+        undefined,
+      );
+      for (let i = 0; i < 2; i++) {
+        const r = await request(
+          `/api/events/${eid}/access`,
+          "POST",
+          { email: " PLANNER@EXAMPLE.COM " },
+          clientCookie,
+        );
+        assert.equal(r.status, 200, JSON.stringify(r.data));
+        assert.equal(r.data.status, "pending");
+      }
+      assert.deepEqual(
+        (await request("/api/events", "GET", undefined, plannerCookie)).data,
+        [],
+      );
+      assert.equal(
+        (await db.all("SELECT id FROM planner_requests WHERE event_id=?", eid))
+          .length,
+        1,
+      );
+      const inbox = await request(
+        "/api/planner-requests",
+        "GET",
+        undefined,
+        plannerCookie,
+      );
+      assert.equal(inbox.status, 200);
+      assert.equal(inbox.data.length, 1);
+      assert.equal(inbox.data[0].cliente_email, "cliente@example.com");
+      assert.equal(inbox.data[0].guests, undefined);
+      assert.equal(inbox.data[0].gifts, undefined);
+      assert.equal(inbox.data[0].password, undefined);
+      plannerRequestId = inbox.data[0].id;
+      assert.equal(
+        (
+          await request(
+            `/api/events/${eid}/access`,
+            "GET",
+            undefined,
+            plannerCookie,
+          )
+        ).status,
+        403,
       );
       assert.equal(
         (
@@ -606,12 +702,259 @@ test("Administração manual: autorização e recuperação completa", async (t)
             `/api/events/${eid}/guests`,
             "POST",
             { nome: "X" },
-            login.cookie,
+            plannerCookie,
           )
         ).status,
         403,
       );
+      assert.equal(
+        (await request("/api/planner-requests", "GET", undefined, clientCookie))
+          .status,
+        403,
+      );
+      const ownerStatus = await request(
+        `/api/events/${eid}/access`,
+        "GET",
+        undefined,
+        clientCookie,
+      );
+      assert.equal(ownerStatus.data[0].status, "pending");
+    },
+  );
+  await t.test(
+    "recusa, proteção contra outra conta e aceite atômico",
+    async () => {
+      const path = `/api/events/${eid}/access-response`;
+      const body = { requestId: plannerRequestId, decision: "accepted" };
+      assert.equal((await request(path, "POST", body)).status, 401);
+      assert.equal(
+        (await request(path, "POST", body, clientCookie)).status,
+        403,
+      );
+      // Uma segunda cerimonialista não pode responder usando o ID descoberto.
+      const stranger = await request("/api/register", "POST", {
+        nome: "Outra",
+        email: "outra@example.com",
+        role: "cerimonialista",
+        password: "OutraSenha!123",
+        passwordConfirm: "OutraSenha!123",
+      });
+      const strangerId = (
+        await db.get("SELECT id FROM users WHERE email='outra@example.com'")
+      ).id;
+      await approve("accounts", strangerId);
+      assert.equal(
+        (await request(path, "POST", body, stranger.cookie)).status,
+        404,
+      );
+      assert.deepEqual(
+        (
+          await request(
+            "/api/planner-requests",
+            "GET",
+            undefined,
+            stranger.cookie,
+          )
+        ).data,
+        [],
+      );
+      assert.equal(
+        (
+          await request(
+            path,
+            "POST",
+            { ...body, decision: "rejected" },
+            plannerCookie,
+          )
+        ).status,
+        200,
+      );
+      assert.equal(
+        (
+          await request(
+            `/api/events/${eid}/access`,
+            "GET",
+            undefined,
+            clientCookie,
+          )
+        ).data[0].status,
+        "rejected",
+      );
+      assert.deepEqual(
+        (await request("/api/events", "GET", undefined, plannerCookie)).data,
+        [],
+      );
+      assert.equal(
+        (await request(path, "POST", body, plannerCookie)).status,
+        409,
+      );
+      await request(
+        `/api/events/${eid}/access`,
+        "POST",
+        { email: "planner@example.com" },
+        clientCookie,
+      );
+      const newRequest = (
+        await request("/api/planner-requests", "GET", undefined, plannerCookie)
+      ).data[0];
+      assert.notEqual(newRequest.id, plannerRequestId);
+      assert.equal(
+        (await request(path, "POST", body, plannerCookie)).status,
+        404,
+      );
+      const accepted = await Promise.all(
+        [1, 2].map(() =>
+          request(
+            path,
+            "POST",
+            { requestId: newRequest.id, decision: "accepted" },
+            plannerCookie,
+          ),
+        ),
+      );
+      assert.deepEqual(accepted.map((r) => r.status).sort(), [200, 409]);
+      const events = (
+        await request("/api/events", "GET", undefined, plannerCookie)
+      ).data;
+      assert.equal(events.length, 1);
+      assert.equal(events[0].id, eid);
+      assert.equal(events[0].cliente_email, "cliente@example.com");
+      assert.equal(
+        (
+          await request(
+            `/api/events/${eid}/guests`,
+            "POST",
+            { nome: "X" },
+            plannerCookie,
+          )
+        ).status,
+        403,
+      );
+      assert.deepEqual(
+        (
+          await request(
+            "/api/planner-requests",
+            "GET",
+            undefined,
+            plannerCookie,
+          )
+        ).data,
+        [],
+      );
+      assert.equal(
+        (
+          await request(
+            `/api/events/${eid}/access`,
+            "GET",
+            undefined,
+            clientCookie,
+          )
+        ).data[0].status,
+        "accepted",
+      );
+      assert.equal(
+        (
+          await request(
+            `/api/events/${eid}/access`,
+            "POST",
+            { email: "planner@example.com" },
+            clientCookie,
+          )
+        ).data.status,
+        "accepted",
+      );
       assert.equal(emailAttempts, 0);
+    },
+  );
+  await t.test(
+    "cliente pode solicitar no cadastro; pedido só aparece após aprovação da conta",
+    async () => {
+      const invalid = await request("/api/register", "POST", {
+        ...registration("rollback@example.com"),
+        cerimonialistaEmail: "ausente@example.com",
+      });
+      assert.equal(invalid.status, 400);
+      assert.equal(
+        await db.get("SELECT id FROM users WHERE email='rollback@example.com'"),
+        undefined,
+      );
+      const signup = await request("/api/register", "POST", {
+        ...registration("vinculada@example.com"),
+        cerimonialistaEmail: "planner@example.com",
+      });
+      assert.equal(signup.status, 200, JSON.stringify(signup.data));
+      assert.deepEqual(
+        (
+          await request(
+            "/api/planner-requests",
+            "GET",
+            undefined,
+            plannerCookie,
+          )
+        ).data,
+        [],
+      );
+      const client = await db.get(
+        "SELECT id FROM users WHERE email='vinculada@example.com'",
+      );
+      const event = await db.get(
+        "SELECT id FROM events WHERE owner=?",
+        client.id,
+      );
+      const pending = await db.get(
+        "SELECT id FROM planner_requests WHERE event_id=?",
+        event.id,
+      );
+      assert.equal(
+        (
+          await request(
+            `/api/events/${event.id}/access-response`,
+            "POST",
+            { requestId: pending.id, decision: "accepted" },
+            plannerCookie,
+          )
+        ).status,
+        404,
+      );
+      await approve("accounts", client.id);
+      assert.equal(
+        (
+          await request(
+            "/api/planner-requests",
+            "GET",
+            undefined,
+            plannerCookie,
+          )
+        ).data[0].id,
+        pending.id,
+      );
+      await db.executeMigration(
+        readFileSync(
+          new URL(
+            "../supabase/migrations/007_planner_requests.sql",
+            import.meta.url,
+          ),
+          "utf8",
+        ),
+      );
+      assert.equal(
+        (
+          await db.get(
+            "SELECT status FROM planner_requests WHERE event_id=?",
+            eid,
+          )
+        ).status,
+        "accepted",
+      );
+      assert.equal(
+        (
+          await db.get(
+            "SELECT status FROM planner_requests WHERE id=?",
+            pending.id,
+          )
+        ).status,
+        "pending",
+      );
     },
   );
   await t.test(
@@ -687,6 +1030,7 @@ test("Administração manual: autorização e recuperação completa", async (t)
       for (const filename of [
         "005_runtime_role.sql",
         "006_admin_approvals.sql",
+        "007_planner_requests.sql",
       ])
         await db.executeMigration(
           readFileSync(
@@ -697,6 +1041,7 @@ test("Administração manual: autorização e recuperação completa", async (t)
       await db.transaction(async () => {
         await db.run("SET LOCAL ROLE tamarcado_app");
         assert.ok((await db.all("SELECT id FROM admin_audit")).length);
+        assert.ok((await db.all("SELECT id FROM planner_requests")).length);
         await db.run(
           "INSERT INTO admin_audit(id,actor,action,created_at) VALUES(?,?,?,?)",
           id(),
@@ -721,6 +1066,7 @@ test("Administração manual: autorização e recuperação completa", async (t)
           "admin_sessions",
           "manual_access_requests",
           "admin_audit",
+          "planner_requests",
         ])
           await assert.rejects(
             db.transaction(async () => {

@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Cadastro de cerimonialista — Tá Marcado</title>
+    <link rel="stylesheet" href="css/tokens.css" />
+    <link rel="stylesheet" href="css/base.css" />
+    <link rel="stylesheet" href="css/login.css" />
+    <link rel="stylesheet" href="css/refinements.css" />
+    <link rel="icon" href="favicon.svg" type="image/svg+xml" />
+  </head>
+  <body class="login-body">
+    <main class="login-shell">
+      <div class="login-logo"><span class="dot"></span>Tá Marcado</div>
+      <div class="login-card">
+        <h1 class="login-title">Sua conta de cerimonialista</h1>
+        <p class="login-sub">
+          Cadastre seu e-mail e escolha sua senha. Quando a equipe aprovar sua
+          conta, você já poderá entrar e responder às solicitações das clientes.
+        </p>
+        <form id="plannerSignup">
+          <label class="field-label" for="f-nome">Seu nome</label>
+          <input
+            class="field-input"
+            id="f-nome"
+            autocomplete="name"
+            maxlength="200"
+            required
+          />
+          <label class="field-label" for="f-email">Seu e-mail</label>
+          <input
+            class="field-input"
+            id="f-email"
+            type="email"
+            autocomplete="username"
+            maxlength="254"
+            required
+          />
+          <label class="field-label" for="f-password">Crie uma senha</label>
+          <input
+            class="field-input"
+            id="f-password"
+            type="password"
+            minlength="8"
+            maxlength="256"
+            autocomplete="new-password"
+            aria-describedby="password-strength-text"
+            required
+          />
+          <div class="password-feedback">
+            <meter
+              id="password-strength"
+              min="0"
+              max="3"
+              value="0"
+              aria-label="Força estimada da senha"
+            ></meter>
+            <p id="password-strength-text" aria-live="polite"></p>
+          </div>
+          <label class="field-label" for="f-password-confirm"
+            >Confirme sua senha</label
+          >
+          <input
+            class="field-input"
+            id="f-password-confirm"
+            type="password"
+            minlength="8"
+            maxlength="256"
+            autocomplete="new-password"
+            aria-describedby="password-match"
+            required
+          />
+          <p
+            id="password-match"
+            class="password-feedback"
+            aria-live="polite"
+          ></p>
+          <p id="signupError" class="login-error" role="alert"></p>
+          <button class="big-btn primary" type="submit">
+            Criar minha conta
+          </button>
+        </form>
+      </div>
+      <p class="login-footnote">
+        Já tem conta?
+        <a href="login.html?perfil=cerimonialista"
+          >Entrar como cerimonialista</a
+        >
+      </p>
+      <p class="login-footnote">
+        <a href="index.html">Voltar ao início</a> ·
+        <a href="mailto:tamarcado10@gmail.com">Dúvidas? Entre em contato</a>
+      </p>
+    </main>
+    <script src="js/app.js"></script>
+    <script src="js/password-feedback.js"></script>
+    <script src="js/planner-signup.js"></script>
+  </body>
+</html>

@@ -303,3 +303,5 @@ tbody tr:hover { background: rgba(176, 129, 63, 0.06); }
   font-weight: 600;
 }
 .reminder-chip.strong { background: var(--green); color: #fff; border-color: var(--green); }
+
+.access-status p { padding-top: 16px; margin-top: 16px; border-top: 1px solid var(--line); line-height: 1.6; overflow-wrap: anywhere; }

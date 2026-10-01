@@ -9,7 +9,8 @@ O projeto usa PostgreSQL no Supabase. A autenticação é própria: as telas fal
 | `users` | Nome, e-mail único, hash da senha, perfil e confirmação do e-mail | Uma conta pode organizar eventos |
 | `sessions` | Token de sessão, usuário e vencimento | Pertence a `users` |
 | `events` | Título, tipo, data, local, prazo e personalização | `owner` aponta para `users` |
-| `access` | Acesso de leitura do cerimonialista | Liga `users` a `events` |
+| `access` | Acesso de leitura após aceite da cerimonialista (ou vínculo anterior preservado) | Liga `users` a `events` |
+| `planner_requests` | Pedido pendente, aceito ou recusado; datas de envio e resposta | Liga evento à cerimonialista destinatária |
 | `guests` | Dados do convidado, token, limite, resposta e endereço opcional | Pertence a `events` |
 | `gifts` | Presente, valor de referência e reserva | Pertence a `events`; reserva aponta para `guests` |
 | `password_resets` | Hash e validade do link de recuperação | Um registro por usuário |

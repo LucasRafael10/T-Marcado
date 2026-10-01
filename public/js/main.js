@@ -62,6 +62,7 @@ document.addEventListener("DOMContentLoaded", () => {
         data: $("f-data").value,
         prazo: $("f-prazo").value,
         local: $("f-local").value,
+        cerimonialistaEmail: $("f-cerimonialista").value.trim(),
       });
       $("eventForm").reset();
       closeEventForm();

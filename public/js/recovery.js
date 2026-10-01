@@ -59,3 +59,24 @@ form.addEventListener("submit", async (event) => {
     button.disabled = false;
   }
 });
+
+if (!resetting) {
+  fetch("/api/access-policy", { cache: "no-store" })
+    .then((r) => {
+      if (!r.ok) throw new Error();
+      return r.json();
+    })
+    .then((policy) => {
+      if (policy.mode === "manual") {
+        if (mode === "resend") {
+          form.hidden = true;
+          message.textContent =
+            "O cadastro agora é aprovado pela equipe. Entre com seu e-mail e senha para acompanhar a análise.";
+        } else {
+          document.querySelector(".login-sub").textContent =
+            "Informe o e-mail cadastrado. A equipe analisará o pedido e, após conferir sua identidade, fornecerá um link temporário para você escolher uma nova senha.";
+        }
+      }
+    })
+    .catch(() => {});
+}

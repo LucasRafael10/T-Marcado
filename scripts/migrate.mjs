@@ -28,6 +28,15 @@ try {
       "utf8",
     ),
   );
+  await executeMigration(
+    readFileSync(
+      new URL(
+        "../supabase/migrations/006_admin_approvals.sql",
+        import.meta.url,
+      ),
+      "utf8",
+    ),
+  );
 } finally {
   await close();
 }

@@ -1,0 +1,220 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <meta name="robots" content="noindex,nofollow" />
+    <meta name="referrer" content="no-referrer" />
+    <title>Administração — Tá Marcado</title>
+    <link rel="stylesheet" href="css/admin.css" />
+    <link rel="icon" href="favicon.svg" type="image/svg+xml" />
+  </head>
+  <body>
+    <section id="login-view" class="login-view">
+      <div class="login-intro">
+        <a class="brand" href="index.html"
+          >Tá Marcado<span>Gestão de acesso</span></a
+        >
+        <div>
+          <p class="eyebrow">Cuidado em cada acesso</p>
+          <h1>Uma porta de entrada.<br />Vocês no controle.</h1>
+          <p>
+            Acompanhem os cadastros, analisem os pedidos de recuperação e
+            mantenham cada decisão registrada.
+          </p>
+        </div>
+        <small>Área exclusiva dos três administradores.</small>
+      </div>
+      <main class="login-form">
+        <p class="eyebrow">Acesso restrito</p>
+        <h2>Bem-vindo de volta.</h2>
+        <p class="muted">Entre com sua credencial administrativa.</p>
+        <form id="login-form">
+          <label for="admin-email">E-mail do administrador</label
+          ><input
+            id="admin-email"
+            type="email"
+            autocomplete="username"
+            maxlength="254"
+            required
+          /><label for="admin-password">Senha administrativa</label
+          ><input
+            id="admin-password"
+            type="password"
+            autocomplete="current-password"
+            maxlength="256"
+            required
+          /><button class="primary" type="submit">
+            Entrar na administração <span aria-hidden="true">→</span>
+          </button>
+        </form>
+        <p id="login-message" class="message" role="status"></p>
+        <p class="help">
+          Seu cadastro de cliente não concede acesso a esta área. Se perdeu sua
+          credencial, peça ao responsável pelo servidor para renová-la.
+        </p>
+      </main>
+    </section>
+    <div id="dashboard" class="dashboard" hidden>
+      <aside class="sidebar">
+        <a class="brand" href="index.html"
+          >Tá Marcado<span>Administração</span></a
+        >
+        <p class="nav-label">Gestão de acesso</p>
+        <nav aria-label="Administração">
+          <button data-tab="accounts" aria-current="page">
+            <span aria-hidden="true">◷</span> Contas</button
+          ><button data-tab="resets">
+            <span aria-hidden="true">↻</span> Trocas de senha</button
+          ><button data-tab="audit">
+            <span aria-hidden="true">≡</span> Histórico
+          </button>
+        </nav>
+        <div class="admin-identity">
+          <span class="avatar" aria-hidden="true">A</span>
+          <div>
+            <strong id="admin-name"></strong><small id="admin-address"></small>
+          </div>
+        </div>
+        <button id="logout" class="logout">Sair da conta</button>
+      </aside>
+      <main class="workspace">
+        <header class="page-header">
+          <div>
+            <p class="eyebrow">Área dos sócios</p>
+            <h1>Controle de acesso</h1>
+            <p class="muted">Cada pedido, uma decisão consciente.</p>
+          </div>
+          <button id="refresh" class="secondary">Atualizar</button>
+        </header>
+        <section class="metrics" aria-label="Resumo">
+          <article>
+            <span>Contas pendentes</span><strong id="count-accounts">—</strong
+            ><small>Aguardando sua análise</small>
+          </article>
+          <article>
+            <span>Pedidos de senha</span><strong id="count-resets">—</strong
+            ><small>Aguardando uma decisão</small>
+          </article>
+          <article>
+            <span>Decisões em 24 horas</span
+            ><strong id="count-decisions">—</strong
+            ><small>Atividade dos administradores</small>
+          </article>
+        </section>
+        <div class="notice">
+          <span aria-hidden="true">✓</span>
+          <p>
+            <strong>Confirme a identidade antes de aprovar.</strong> Para
+            recuperar uma senha, entregue o link temporário por um canal já
+            conhecido da pessoa. O painel nunca mostra senhas.
+          </p>
+        </div>
+        <p
+          id="dashboard-message"
+          class="message"
+          role="status"
+          aria-live="polite"
+        ></p>
+        <section class="queue" aria-labelledby="queue-title">
+          <div class="queue-header">
+            <div>
+              <h2 id="queue-title">Contas para analisar</h2>
+              <p id="queue-description" class="muted">
+                Confira os dados antes de liberar o acesso.
+              </p>
+            </div>
+            <label id="filter-label" class="filter"
+              >Exibir
+              <select id="account-filter">
+                <option value="pending">Pendentes</option>
+                <option value="approved">Aprovadas</option>
+                <option value="rejected">Recusadas</option>
+              </select></label
+            >
+          </div>
+          <div id="rows" class="rows" aria-live="polite"></div>
+          <footer class="pagination">
+            <span id="page-label">Página 1</span>
+            <div>
+              <button id="previous" class="secondary" disabled>Anterior</button
+              ><button id="next" class="secondary" disabled>Próxima</button>
+            </div>
+          </footer>
+        </section>
+        <p class="footer-note">
+          Acesso individual · Decisões registradas · Links válidos por 30
+          minutos
+        </p>
+      </main>
+    </div>
+    <dialog id="decision-dialog" aria-labelledby="decision-title">
+      <form id="decision-form">
+        <div class="dialog-heading">
+          <p class="eyebrow">Confirmar decisão</p>
+          <button
+            type="button"
+            id="cancel-decision"
+            class="icon-button"
+            aria-label="Fechar"
+          >
+            ×
+          </button>
+        </div>
+        <h2 id="decision-title"></h2>
+        <p id="decision-person" class="muted"></p>
+        <p id="decision-explanation" class="help"></p>
+        <label id="identity-label" class="checkbox"
+          ><input type="checkbox" id="identity-confirmed" />Conferi a identidade
+          por um canal conhecido e autorizei este pedido.</label
+        ><label for="decision-note">Justificativa</label
+        ><textarea
+          id="decision-note"
+          minlength="8"
+          maxlength="500"
+          rows="3"
+          placeholder="Ex.: titular confirmado pelo contato já cadastrado."
+          required
+        ></textarea
+        ><small class="muted"
+          >Não inclua senhas, documentos ou dados sensíveis.</small
+        ><label for="decision-password">Sua senha administrativa</label
+        ><input
+          id="decision-password"
+          type="password"
+          autocomplete="current-password"
+          maxlength="256"
+          required
+        />
+        <p id="decision-message" class="message" role="status"></p>
+        <button id="confirm-decision" class="primary" type="submit">
+          Confirmar
+        </button>
+      </form>
+    </dialog>
+    <dialog id="link-dialog" aria-labelledby="link-title">
+      <div class="dialog-heading">
+        <p class="eyebrow">Recuperação autorizada</p>
+        <button id="close-link" class="icon-button" aria-label="Fechar">
+          ×
+        </button>
+      </div>
+      <h2 id="link-title">Entregue este link com cuidado.</h2>
+      <p id="link-person" class="muted"></p>
+      <p>
+        Envie somente à pessoa cuja identidade foi conferida. Ela escolherá a
+        própria senha.
+      </p>
+      <label for="recovery-link">Link individual · uso único</label
+      ><input id="recovery-link" type="text" readonly autocomplete="off" />
+      <p id="link-expiry" class="help"></p>
+      <button id="copy-link" class="primary">Copiar link</button>
+      <p id="copy-message" class="message" role="status"></p>
+      <p class="help">
+        O link não ficará visível no histórico. Se precisar, gere outro na aba
+        Trocas de senha; o anterior deixará de funcionar.
+      </p>
+    </dialog>
+    <script src="js/admin.js" defer></script>
+  </body>
+</html>

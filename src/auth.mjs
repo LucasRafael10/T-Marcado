@@ -1,3 +1,4 @@
+import { manualApproval } from "./admin-config.mjs";
 import { get, run } from "./database.mjs";
 import { id } from "./passwords.mjs";
 import { fail } from "./validation.mjs";
@@ -9,7 +10,7 @@ export async function session(req) {
   return (
     token &&
     (await get(
-      "SELECT u.id,u.nome,u.email,u.role FROM sessions s JOIN users u ON s.user_id=u.id WHERE s.token=? AND s.expires>? AND u.email_verified=true",
+      `SELECT u.id,u.nome,u.email,u.role FROM sessions s JOIN users u ON s.user_id=u.id WHERE s.token=? AND s.expires>? AND ${manualApproval ? "u.account_status='approved'" : "u.email_verified=true"}`,
       token,
       Date.now(),
     ))
@@ -69,7 +70,7 @@ export async function pendingSession(req) {
   )?.[1];
   if (!token) return null;
   const u = await get(
-    "SELECT u.id,u.email,u.role,u.email_verified FROM sessions s JOIN users u ON u.id=s.user_id WHERE s.token=? AND s.expires>?",
+    `SELECT u.id,u.email,u.role,u.email_verified${manualApproval ? ",u.account_status" : ""} FROM sessions s JOIN users u ON u.id=s.user_id WHERE s.token=? AND s.expires>?`,
     token,
     Date.now(),
   );

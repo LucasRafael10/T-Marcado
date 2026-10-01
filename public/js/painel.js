@@ -317,14 +317,14 @@ document.addEventListener("DOMContentLoaded", () =>
     $("accessForm").onsubmit = (e) => {
       e.preventDefault();
       action(e.submitter, async () => {
-        await api(eventPath() + "/access", "POST", {
+        const result = await api(eventPath() + "/access", "POST", {
           nome: $("accessName").value,
           email: $("accessEmail").value,
-
         });
         $("accessForm").reset();
         notice(
-          "Acesso de leitura concedido. Compartilhe as credenciais diretamente com a pessoa.",
+          result.message ||
+            "Acesso vinculado. A pessoa deve concluir a confirmação para entrar.",
         );
       });
     };

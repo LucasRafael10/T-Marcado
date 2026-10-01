@@ -1,3 +1,6 @@
+import { manualApproval } from "./admin-config.mjs";
+import { adminRoute } from "./admin.mjs";
+import { requestManualReset, resetManually } from "./manual-recovery.mjs";
 import { get, all, run, transaction } from "./database.mjs";
 import { appOrigin, secureCookie } from "./config.mjs";
 import { id, verify } from "./passwords.mjs";
@@ -74,6 +77,7 @@ export async function api(req, res, url) {
 
   if (!b || typeof b !== "object" || Array.isArray(b))
     fail(400, "Dados inválidos.");
+  if (p.startsWith("/api/admin/")) return adminRoute(req, res, url, b);
   const eventId = p.match(/^\/api\/events\/([a-f0-9]+)(?:\/|$)/)?.[1];
   if (eventId && m !== "GET") {
     // Serializa alterações do mesmo evento, inclusive confirmação e reserva.
@@ -91,10 +95,34 @@ export async function api(req, res, url) {
 async function route(req, res, url, b) {
   const p = url.pathname,
     m = req.method;
+  if (p === "/api/access-policy" && m === "GET")
+    return { mode: manualApproval ? "manual" : "email" };
+  if (
+    manualApproval &&
+    [
+      "/api/verification-info",
+      "/api/confirm-email",
+      "/api/resend-pending",
+      "/api/resend-verification",
+    ].includes(p)
+  )
+    fail(
+      409,
+      "O acesso agora depende da aprovação da equipe. Entre com seu e-mail e senha para acompanhar.",
+    );
   if (p === "/api/verification-status" && m === "GET") {
     const u = await pendingSession(req);
     if (!u)
       fail(401, "Entre com o e-mail e a senha do cadastro para continuar.");
+    if (manualApproval)
+      return {
+        mode: "manual",
+        email: u.email,
+        verified: u.account_status === "approved",
+        status: u.account_status,
+        role: u.role,
+        retryAfter: 0,
+      };
     const last = await get(
       "SELECT requested_at FROM email_verifications WHERE user_id=?",
       u.id,
@@ -138,11 +166,13 @@ async function route(req, res, url, b) {
   }
   if (p === "/api/forgot-password" && m === "POST") {
     await limit(req, "forgot-password", 10);
-    return requestReset(b.email);
+    return manualApproval ? requestManualReset(b.email) : requestReset(b.email);
   }
   if (p === "/api/reset-password" && m === "POST") {
     await limit(req, "reset-password", 10);
-    return resetPassword(b.token, b.password);
+    return manualApproval
+      ? resetManually(b.token, b.password, b.passwordConfirm)
+      : resetPassword(b.token, b.password);
   }
   if (p === "/api/login" && m === "POST") {
     await limit(req, "login", 12);
@@ -160,6 +190,19 @@ async function route(req, res, url, b) {
       u.role !== b.role
     )
       fail(401, "E-mail, senha ou perfil incorreto.");
+    if (manualApproval) {
+      if (u.account_status === "rejected")
+        fail(
+          403,
+          "Seu cadastro não foi aprovado. Entre em contato com a equipe.",
+        );
+      await loginCookie(res, u.id);
+      return {
+        mode: "manual",
+        pending: u.account_status !== "approved",
+        role: u.role,
+      };
+    }
     if (!u.email_verified) {
       await loginCookie(res, u.id);
       return {
@@ -194,7 +237,7 @@ async function route(req, res, url, b) {
       );
     if (typeof b.passwordConfirm !== "string" || password !== b.passwordConfirm)
       fail(400, "As senhas precisam ser iguais.");
-    requireEmail();
+    if (!manualApproval) requireEmail();
     if (await get("SELECT id FROM users WHERE email=?", email))
       fail(
         409,
@@ -213,6 +256,12 @@ async function route(req, res, url, b) {
       return uid;
     });
     await loginCookie(res, uid);
+    if (manualApproval)
+      return {
+        mode: "manual",
+        pending: true,
+        message: "Cadastro recebido. Aguarde a aprovação da equipe.",
+      };
     return { ...(await requestPendingVerification(email)), pending: true };
   }
   if (p === "/api/me" && m === "GET") return await auth(req);
@@ -506,7 +555,7 @@ async function route(req, res, url, b) {
     }
     if (action === "access" && m === "POST") {
       const email = txt(b.email, "E-mail").toLowerCase();
-      requireEmail();
+      if (!manualApproval) requireEmail();
       if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))
         fail(400, "Informe um e-mail válido.");
       let u = await get("SELECT * FROM users WHERE email=?", email);
@@ -528,6 +577,12 @@ async function route(req, res, url, b) {
         eid,
         u.id,
       );
+      if (manualApproval)
+        return {
+          ok: true,
+          message:
+            "Acesso vinculado. Contas novas precisam da aprovação da equipe; a ativação será entregue após a conferência de identidade.",
+        };
       return { ok: true, verificationEmail: email };
     }
   }

@@ -26,7 +26,8 @@ document.addEventListener("DOMContentLoaded", () => {
         if (result.pending) {
           location.href =
             "aguarde-confirmacao.html?envio=" +
-            encodeURIComponent(result.emailStatus || "unknown");
+            encodeURIComponent(result.emailStatus || "unknown") +
+            (result.mode === "manual" ? "&approval=manual" : "");
           return;
         }
         location.href =

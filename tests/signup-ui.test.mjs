@@ -183,3 +183,60 @@ test("reenvio mostra falha real, bloqueia cliques duplicados e respeita o prazo 
   assert.equal(els.resend.disabled, true);
   assert.match(els.resend.textContent, /Reenviar em 3[67]s/);
 });
+
+test("espera manual esconde reenvio e só abre o painel após aprovação", async () => {
+  const els = Object.fromEntries(
+    [
+      "message",
+      "resend",
+      "pending-email",
+      "waiting-title",
+      "waiting-intro",
+      "waiting-hint",
+    ].map((k) => [k, element()]),
+  );
+  let approved = false,
+    nextCheck,
+    redirected,
+    resendCalls = 0;
+  vm.runInNewContext(script("wait-verification.js"), {
+    document: { getElementById: (k) => els[k] },
+    location: {
+      search: "?approval=manual",
+      replace: (url) => {
+        redirected = url;
+      },
+    },
+    URLSearchParams,
+    Date,
+    setInterval() {
+      return 1;
+    },
+    clearInterval() {},
+    setTimeout(callback) {
+      nextCheck = callback;
+    },
+    fetch: async (url) => {
+      if (url !== "/api/verification-status") resendCalls++;
+      return {
+        ok: true,
+        json: async () => ({
+          mode: "manual",
+          email: "cliente@example.com",
+          role: "noiva",
+          status: approved ? "approved" : "pending",
+          verified: approved,
+        }),
+      };
+    },
+  });
+  await new Promise((resolve) => setImmediate(resolve));
+  assert.equal(els.resend.hidden, true);
+  assert.match(els["waiting-title"].textContent, /em análise/);
+  assert.equal(redirected, undefined);
+  await els.resend.listeners.click();
+  assert.equal(resendCalls, 0);
+  approved = true;
+  await nextCheck();
+  assert.equal(redirected, "painel.html");
+});

@@ -10,6 +10,24 @@ const initialMessages = {
 };
 if (initialMessages[initialStatus])
   message.textContent = initialMessages[initialStatus];
+function showManual(status = "pending") {
+  document.title = "Aprovação de cadastro — Tá Marcado";
+  document.getElementById("waiting-title").textContent =
+    status === "rejected"
+      ? "Cadastro não aprovado"
+      : "Seu cadastro está em análise";
+  document.getElementById("waiting-intro").textContent =
+    "A equipe do Tá Marcado analisará seu cadastro antes de liberar o acesso. Você não precisa confirmar um link de e-mail.";
+  document.getElementById("waiting-hint").textContent =
+    "Você pode fechar esta página e entrar novamente depois com o e-mail e a senha cadastrados.";
+  button.hidden = true;
+  message.textContent =
+    status === "rejected"
+      ? "Entre em contato com a equipe para esclarecer seu cadastro."
+      : "Aguardando aprovação. Esta página será atualizada automaticamente.";
+}
+if (new URLSearchParams(location.search).get("approval") === "manual")
+  showManual();
 let nextSend = 0,
   sending = false,
   ready = false,
@@ -40,7 +58,13 @@ async function check() {
     }
     if (r.ok) {
       const d = await r.json();
-      document.getElementById("pending-email").textContent = d.email;
+      if (d.mode === "manual") {
+        showManual(d.status);
+        if (d.status === "rejected") {
+          stopped = true;
+          clearInterval(ticker);
+        }
+      } else document.getElementById("pending-email").textContent = d.email;
       if (d.verified) {
         stopped = true;
         clearInterval(ticker);
@@ -65,7 +89,7 @@ async function check() {
   if (!stopped) setTimeout(check, 5000);
 }
 button.addEventListener("click", async () => {
-  if (button.disabled || sending || stopped) return;
+  if (button.hidden || button.disabled || sending || stopped) return;
   sending = true;
   renderButton();
   message.textContent = "Solicitando o envio do link…";

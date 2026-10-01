@@ -1,3 +1,4 @@
+import { adminAccounts } from "./src/admin-config.mjs";
 import http from "node:http";
 import { readFileSync, existsSync } from "node:fs";
 import { fileURLToPath } from "node:url";
@@ -16,6 +17,12 @@ cleanup.unref();
 const root = path.dirname(fileURLToPath(import.meta.url));
 await get("SELECT email_verified FROM users LIMIT 1");
 await get("SELECT key FROM rate_limits LIMIT 1");
+if (adminAccounts().length) {
+  await get("SELECT account_status FROM users LIMIT 1");
+  await get("SELECT token_hash FROM admin_sessions LIMIT 1");
+  await get("SELECT id FROM manual_access_requests LIMIT 1");
+  await get("SELECT id FROM admin_audit LIMIT 1");
+}
 if (process.env.NODE_ENV === "production") {
   const role = await get("SELECT current_user AS name");
   if (role.name !== "tamarcado_app")
@@ -109,3 +116,4 @@ for (const signal of ["SIGTERM", "SIGINT"])
       process.exit(0);
     }),
   );
+

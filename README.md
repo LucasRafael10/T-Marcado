@@ -205,3 +205,8 @@ No botão **Convite** de cada convidado, é possível compartilhar foto e texto 
 O endereço é opcional, pode ser preenchido mesmo na recusa e fica acessível à organização no painel e na exportação CSV. Desativar a coleta oculta o campo e preserva endereços já recebidos.
 
 **Atualização de instalações existentes:** execute `npm run db:migrate` antes de iniciar a versão atualizada. A migração `003_invite_options.sql` adiciona as configurações e o endereço sem apagar os dados existentes. As imagens ficam persistidas no PostgreSQL.
+
+
+## Aprovação manual de contas e recuperação de senha
+
+Painel exclusivo de três administradores em `/admin.html`. A ativação dispensa Resend e domínio próprio. Siga [ADMIN-SETUP.md](ADMIN-SETUP.md) para aplicar a migração 006, gerar credenciais privadas e configurar o modo manual no Render.
